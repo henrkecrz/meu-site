@@ -46,8 +46,26 @@ type Category struct {
 	Icon string `json:"icon"`
 }
 
+type UserProfile struct {
+	ID              string `json:"id"`
+	IdentitySubject string `json:"identitySubject"`
+	Email           string `json:"email"`
+	Name            string `json:"name"`
+	PictureURL      string `json:"pictureUrl"`
+	Role            string `json:"role"`
+}
+
+type SyncProfileRequest struct {
+	Email      string `json:"email"`
+	Name       string `json:"name"`
+	PictureURL string `json:"pictureUrl"`
+}
+
 type Claims struct {
 	Permissions []string `json:"permissions"`
+	Email       string   `json:"email"`
+	Name        string   `json:"name"`
+	Picture     string   `json:"picture"`
 	jwt.RegisteredClaims
 }
 
@@ -98,6 +116,7 @@ func main() {
 	r.Group(func(private chi.Router) {
 		private.Use(app.authMiddleware)
 		private.Get("/api/me", app.me)
+		private.Post("/api/profile/sync", app.syncProfile)
 		private.Post("/api/cart/items", app.addCartItem)
 		private.Post("/api/orders", app.createOrder)
 	})
@@ -151,7 +170,39 @@ func (a *App) getProduct(w http.ResponseWriter, r *http.Request) {
 
 func (a *App) me(w http.ResponseWriter, r *http.Request) {
 	claims := r.Context().Value("claims").(*Claims)
+	profile, err := a.getProfileBySubject(r.Context(), claims.Subject)
+	if err == nil {
+		writeJSON(w, http.StatusOK, map[string]any{"subject": claims.Subject, "permissions": claims.Permissions, "profile": profile})
+		return
+	}
 	writeJSON(w, http.StatusOK, map[string]any{"subject": claims.Subject, "permissions": claims.Permissions})
+}
+
+func (a *App) syncProfile(w http.ResponseWriter, r *http.Request) {
+	claims := r.Context().Value("claims").(*Claims)
+	var input SyncProfileRequest
+	_ = json.NewDecoder(r.Body).Decode(&input)
+	if input.Email == "" { input.Email = claims.Email }
+	if input.Name == "" { input.Name = claims.Name }
+	if input.PictureURL == "" { input.PictureURL = claims.Picture }
+	if input.Email == "" {
+		input.Email = fmt.Sprintf("%s@nexus.local", strings.ReplaceAll(claims.Subject, "|", "-"))
+	}
+
+	row := a.DB.QueryRow(r.Context(), `INSERT INTO user_profiles (identity_subject, email, name, picture_url, role)
+		VALUES ($1, $2, $3, $4, 'customer')
+		ON CONFLICT (identity_subject) DO UPDATE SET email = EXCLUDED.email, name = EXCLUDED.name, picture_url = EXCLUDED.picture_url, updated_at = now()
+		RETURNING id, identity_subject, email, COALESCE(name, ''), COALESCE(picture_url, ''), role`, claims.Subject, input.Email, input.Name, input.PictureURL)
+	var profile UserProfile
+	if err := row.Scan(&profile.ID, &profile.IdentitySubject, &profile.Email, &profile.Name, &profile.PictureURL, &profile.Role); err != nil { writeError(w, err); return }
+	writeJSON(w, http.StatusOK, profile)
+}
+
+func (a *App) getProfileBySubject(ctx context.Context, subject string) (UserProfile, error) {
+	row := a.DB.QueryRow(ctx, `SELECT id, identity_subject, email, COALESCE(name, ''), COALESCE(picture_url, ''), role FROM user_profiles WHERE identity_subject = $1`, subject)
+	var profile UserProfile
+	err := row.Scan(&profile.ID, &profile.IdentitySubject, &profile.Email, &profile.Name, &profile.PictureURL, &profile.Role)
+	return profile, err
 }
 
 func (a *App) addCartItem(w http.ResponseWriter, r *http.Request) {
