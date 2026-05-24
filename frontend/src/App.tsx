@@ -1,8 +1,8 @@
 import { FormEvent, useEffect, useMemo, useState } from 'react'
 import { useAuth0 } from '@auth0/auth0-react'
-import { Search, ShoppingCart, Heart, UserRound, Star, Truck, ShieldCheck, Zap, Loader2, LogOut } from 'lucide-react'
+import { Search, ShoppingCart, Heart, UserRound, Star, Truck, ShieldCheck, Zap, Loader2, LogOut, CheckCircle2 } from 'lucide-react'
 import { cents, Product, Category } from './types'
-import { getCategories, getProducts, getMe, syncProfile, getCart, addCartItem, Cart } from './api'
+import { getCategories, getProducts, getMe, syncProfile, getCart, addCartItem, createOrder, Cart, Order } from './api'
 
 const fallbackProducts: Product[] = [
   { id: '1', name: 'Notebook Gamer Pro 16', slug: 'notebook-gamer-pro-16', description: 'Notebook gamer com GPU dedicada, tela rapida, 16GB RAM e SSD.', imageEmoji: '💻', priceCents: 699900, oldPriceCents: 849900, stock: 18, rating: 4.8, reviewCount: 256, sellerName: 'Nexus Oficial', categorySlug: 'notebooks' },
@@ -75,17 +75,20 @@ function ProductCard({ product, onAddToCart, isAdding }: { product: Product; onA
   )
 }
 
-function CartPanel({ cart, status }: { cart?: Cart; status: string }) {
+function CartPanel({ cart, status, onCheckout, isCheckingOut, lastOrder }: { cart?: Cart; status: string; onCheckout: () => void; isCheckingOut: boolean; lastOrder?: Order }) {
   return (
     <section className="cart-panel" id="carrinho">
       <div>
-        <span className="eyebrow">Carrinho persistente</span>
+        <span className="eyebrow">Checkout realista</span>
         <h2>Seu carrinho</h2>
         <p>{status}</p>
       </div>
       <div className="cart-summary">
         <strong>{cart?.itemCount || 0} itens</strong>
         <span>{cents(cart?.totalCents || 0)}</span>
+        <button className="primary-button full" disabled={isCheckingOut || !cart?.itemCount} onClick={onCheckout}>
+          {isCheckingOut ? 'Finalizando...' : 'Finalizar pedido'}
+        </button>
       </div>
       <div className="cart-items-list">
         {cart?.items?.length ? cart.items.map(item => (
@@ -96,6 +99,15 @@ function CartPanel({ cart, status }: { cart?: Cart; status: string }) {
           </div>
         )) : <small className="seller">Entre na conta e adicione produtos para salvar o carrinho no PostgreSQL.</small>}
       </div>
+      {lastOrder ? (
+        <div className="order-success">
+          <CheckCircle2 size={28} />
+          <div>
+            <strong>Pedido criado com sucesso</strong>
+            <small>Pedido {lastOrder.orderId.slice(0, 8)} • Status {lastOrder.status} • Total {cents(lastOrder.totalCents)}</small>
+          </div>
+        </div>
+      ) : null}
     </section>
   )
 }
@@ -143,7 +155,9 @@ export function App() {
   const [authStatus, setAuthStatus] = useState('Configure VITE_AUTH0_DOMAIN, VITE_AUTH0_CLIENT_ID e VITE_AUTH0_AUDIENCE para ativar login real.')
   const [cartStatus, setCartStatus] = useState('Carrinho local aguardando login.')
   const [cart, setCart] = useState<Cart | undefined>()
+  const [lastOrder, setLastOrder] = useState<Order | undefined>()
   const [addingProductId, setAddingProductId] = useState<string | null>(null)
+  const [isCheckingOut, setIsCheckingOut] = useState(false)
   const { isAuthenticated, user, getAccessTokenSilently, loginWithRedirect } = useAuth0()
 
   useEffect(() => {
@@ -189,6 +203,7 @@ export function App() {
       return
     }
     setAddingProductId(product.id)
+    setLastOrder(undefined)
     try {
       const token = await getAccessTokenSilently()
       const updatedCart = await addCartItem(token, product.id, 1)
@@ -198,6 +213,27 @@ export function App() {
       setCartStatus('Nao foi possivel adicionar o item. Verifique API, Auth0 e banco.')
     } finally {
       setAddingProductId(null)
+    }
+  }
+
+  async function handleCheckout() {
+    if (!isAuthenticated) {
+      setCartStatus('Entre na conta para finalizar o pedido.')
+      await loginWithRedirect()
+      return
+    }
+    setIsCheckingOut(true)
+    try {
+      const token = await getAccessTokenSilently()
+      const order = await createOrder(token)
+      setLastOrder(order)
+      const newCart = await getCart(token)
+      setCart(newCart)
+      setCartStatus('Pedido criado e carrinho convertido no PostgreSQL.')
+    } catch (error) {
+      setCartStatus('Nao foi possivel finalizar o pedido. Verifique se o carrinho tem itens e se a API esta ativa.')
+    } finally {
+      setIsCheckingOut(false)
     }
   }
 
@@ -216,7 +252,7 @@ export function App() {
           <aside className="filters"><section className="filter-box"><h3>Filtros</h3><div className="check-list"><label><span><input type="checkbox" /> Notebooks</span><small>386</small></label><label><span><input type="checkbox" /> Frete gratis</span><small>Gratis</small></label><label><span><input type="checkbox" /> Entrega rapida</span><small>Turbo</small></label></div></section></aside>
           <section><div className="listing-top"><div><h1>Produtos de tecnologia</h1><p>{apiStatus}</p></div><select><option>Mais relevantes</option></select></div><div className="chips"><span className="chip">Em promocao</span><span className="chip">Frete gratis</span>{isLoadingCatalog ? <span className="chip"><Loader2 size={14} /> Carregando</span> : null}</div><div className="product-grid listing-grid">{featured.map(product => <ProductCard product={product} key={product.id} onAddToCart={handleAddToCart} isAdding={addingProductId === product.id} />)}</div></section>
         </section>
-        <CartPanel cart={cart} status={cartStatus} />
+        <CartPanel cart={cart} status={cartStatus} onCheckout={handleCheckout} isCheckingOut={isCheckingOut} lastOrder={lastOrder} />
         <section className="auth-page"><div className="auth-shell"><section className="auth-hero"><span className="eyebrow">Auth0</span><h1>Login social pronto para producao.</h1><p>Configure as conexoes Google, Apple e Microsoft no painel do Auth0 e a aplicacao usa os tokens para chamar a API protegida em Go.</p></section><LoginPanel authStatus={authStatus} /></div></section>
       </main>
     </>
