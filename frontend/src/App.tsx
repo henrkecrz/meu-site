@@ -52,6 +52,7 @@ function Header({ categories, onSearch, cartCount }: { categories: Category[]; o
       <nav className="category-nav container">
         {categories.map((item, index) => <a className={index === 0 ? 'active' : ''} href="#produtos" key={item.slug}>{item.icon} {item.name}</a>)}
         <a href="#pedidos">📦 Meus pedidos</a>
+        <a href="#vendedor">🏪 Vendedor</a>
         <a href="#produtos">⭐ Mais vendidos</a>
         <a href="#produtos">🏷️ Ofertas</a>
       </nav>
@@ -142,6 +143,62 @@ function OrdersPanel({ orders, status, isLoading }: { orders: Order[]; status: s
             <div><strong>Nenhum pedido encontrado</strong><small>Finalize um carrinho para criar seu primeiro pedido.</small></div>
           </div>
         )}
+      </div>
+    </section>
+  )
+}
+
+function SellerDashboard({ products, orders }: { products: Product[]; orders: Order[] }) {
+  const sellerName = products[0]?.sellerName || 'Nexus Oficial'
+  const sellerProducts = products.filter(product => product.sellerName === sellerName)
+  const sellerProductIds = new Set(sellerProducts.map(product => product.id))
+  const sellerOrderItems = orders.flatMap(order => order.items.filter(item => sellerProductIds.has(item.productId)))
+  const sellerRevenue = sellerOrderItems.reduce((total, item) => total + item.lineTotal, 0)
+  const sellerStock = sellerProducts.reduce((total, product) => total + product.stock, 0)
+
+  return (
+    <section className="seller-panel" id="vendedor">
+      <div className="orders-header">
+        <div>
+          <span className="eyebrow">Central do vendedor</span>
+          <h2>Dashboard do vendedor</h2>
+          <p>Painel inicial para acompanhar produtos, estoque, pedidos recebidos e receita por seller.</p>
+        </div>
+        <span className="status-pill">{sellerName}</span>
+      </div>
+
+      <div className="seller-kpis">
+        <div><small>Produtos ativos</small><strong>{sellerProducts.length}</strong></div>
+        <div><small>Estoque total</small><strong>{sellerStock}</strong></div>
+        <div><small>Itens vendidos</small><strong>{sellerOrderItems.reduce((total, item) => total + item.quantity, 0)}</strong></div>
+        <div><small>Receita capturada</small><strong>{cents(sellerRevenue)}</strong></div>
+      </div>
+
+      <div className="seller-columns">
+        <div>
+          <h3>Produtos do vendedor</h3>
+          <div className="seller-list">
+            {sellerProducts.map(product => (
+              <div className="seller-row" key={product.id}>
+                <span>{product.imageEmoji}</span>
+                <div><strong>{product.name}</strong><small>Estoque {product.stock} • {cents(product.priceCents)}</small></div>
+                <b>{product.rating} ★</b>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div>
+          <h3>Pedidos recebidos</h3>
+          <div className="seller-list">
+            {sellerOrderItems.length ? sellerOrderItems.slice(0, 6).map((item, index) => (
+              <div className="seller-row" key={`${item.productId}-${index}`}>
+                <span>{item.imageEmoji}</span>
+                <div><strong>{item.name}</strong><small>{item.quantity} unidade(s) vendida(s)</small></div>
+                <b>{cents(item.lineTotal)}</b>
+              </div>
+            )) : <small className="seller">Nenhum pedido recebido para este seller ainda.</small>}
+          </div>
+        </div>
       </div>
     </section>
   )
@@ -308,6 +365,7 @@ export function App() {
         </section>
         <CartPanel cart={cart} status={cartStatus} onCheckout={handleCheckout} isCheckingOut={isCheckingOut} lastOrder={lastOrder} />
         <OrdersPanel orders={orders} status={ordersStatus} isLoading={isLoadingOrders} />
+        <SellerDashboard products={products} orders={orders} />
         <section className="auth-page"><div className="auth-shell"><section className="auth-hero"><span className="eyebrow">Auth0</span><h1>Login social pronto para producao.</h1><p>Configure as conexoes Google, Apple e Microsoft no painel do Auth0 e a aplicacao usa os tokens para chamar a API protegida em Go.</p></section><LoginPanel authStatus={authStatus} /></div></section>
       </main>
     </>
