@@ -153,6 +153,7 @@ func main() {
 		private.Post("/api/profile/sync", app.syncProfile)
 		private.Get("/api/cart", app.getCart)
 		private.Post("/api/cart/items", app.addCartItem)
+		private.Get("/api/orders", app.listOrders)
 		private.Post("/api/orders", app.createOrder)
 	})
 
@@ -304,6 +305,45 @@ func (a *App) buildCartResponse(ctx context.Context, cartID string) (CartRespons
 		cart.Items = append(cart.Items, item)
 	}
 	return cart, rows.Err()
+}
+
+func (a *App) listOrders(w http.ResponseWriter, r *http.Request) {
+	claims := r.Context().Value("claims").(*Claims)
+	rows, err := a.DB.Query(r.Context(), `SELECT id, status, total_cents, created_at FROM orders WHERE customer_ref = $1 ORDER BY created_at DESC LIMIT 20`, claims.Subject)
+	if err != nil { writeError(w, err); return }
+	defer rows.Close()
+
+	orders := []OrderResponse{}
+	for rows.Next() {
+		var order OrderResponse
+		if err := rows.Scan(&order.OrderID, &order.Status, &order.TotalCents, &order.CreatedAt); err != nil { writeError(w, err); return }
+		order.Items, err = a.getOrderItems(r.Context(), order.OrderID)
+		if err != nil { writeError(w, err); return }
+		orders = append(orders, order)
+	}
+	writeJSON(w, http.StatusOK, orders)
+}
+
+func (a *App) getOrderItems(ctx context.Context, orderID string) ([]CartItem, error) {
+	rows, err := a.DB.Query(ctx, `SELECT p.id, p.name, p.slug, p.image_emoji, oi.unit_price_cents, oi.quantity, s.name, p.rating, p.review_count
+		FROM order_items oi
+		JOIN products p ON p.id = oi.product_id
+		JOIN sellers s ON s.id = oi.seller_id
+		WHERE oi.order_id = $1
+		ORDER BY p.name`, orderID)
+	if err != nil { return nil, err }
+	defer rows.Close()
+
+	items := []CartItem{}
+	for rows.Next() {
+		var item CartItem
+		if err := rows.Scan(&item.ProductID, &item.Name, &item.Slug, &item.ImageEmoji, &item.PriceCents, &item.Quantity, &item.SellerName, &item.Rating, &item.ReviewCount); err != nil {
+			return nil, err
+		}
+		item.LineTotal = item.PriceCents * item.Quantity
+		items = append(items, item)
+	}
+	return items, rows.Err()
 }
 
 func (a *App) createOrder(w http.ResponseWriter, r *http.Request) {
