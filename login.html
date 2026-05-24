@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Entrar | Nexus Commerce</title>
+    <meta name="description" content="Entre no Nexus Commerce com Google, Apple, Microsoft ou email." />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="market-header">
+      <div class="header-main container">
+        <a class="market-logo" href="index.html"><strong>NEXUS</strong><span>COMMERCE</span></a>
+        <button class="category-trigger">☰ <span>Todas as categorias</span></button>
+        <form class="market-search" action="produtos.html"><input name="q" type="search" placeholder="Buscar produtos, categorias, marcas..." /><button>⌕</button></form>
+        <a class="account-link" href="login.html">Ola! Faca seu<br /><strong>login ou cadastre-se</strong></a>
+        <a class="icon-link" href="#">♡ <span>Favoritos</span></a>
+        <a class="icon-link cart-link" href="#">🛒 <span>Carrinho</span><b id="cartCount">2</b></a>
+      </div>
+    </header>
+
+    <main class="container auth-page">
+      <div class="auth-shell">
+        <section class="auth-hero">
+          <span class="eyebrow">Conta Nexus</span>
+          <h1>Entre para comprar melhor, mais rapido e com seguranca.</h1>
+          <p>Salve favoritos, acompanhe pedidos, receba ofertas personalizadas, acesse o Nexus Prime e compre em lojas oficiais verificadas.</p>
+          <div class="benefit-list">
+            <span>✓ Compra protegida em todos os pedidos</span>
+            <span>✓ Frete gratis em ofertas selecionadas</span>
+            <span>✓ Login social pronto para integracao real</span>
+          </div>
+        </section>
+
+        <section class="auth-card">
+          <h2>Entrar ou cadastrar</h2>
+          <p>Use uma conta social ou continue com email.</p>
+
+          <div class="social-stack">
+            <button class="social-button google"><i>G</i> Continuar com Google</button>
+            <button class="social-button apple"><i></i> Continuar com Apple</button>
+            <button class="social-button microsoft"><i>▦</i> Continuar com Microsoft</button>
+          </div>
+
+          <div class="divider">ou</div>
+
+          <form class="auth-form">
+            <input class="auth-input" type="email" placeholder="Email" />
+            <input class="auth-input" type="password" placeholder="Senha" />
+            <div class="auth-options">
+              <label><input type="checkbox" /> Manter conectado</label>
+              <a href="#">Esqueci minha senha</a>
+            </div>
+            <button class="primary-button full">Entrar</button>
+          </form>
+          <p id="loginStatus" class="secure-note">Ao continuar, voce concorda com os Termos de Uso e Politica de Privacidade.</p>
+        </section>
+      </div>
+    </main>
+
+    <script src="app.js"></script>
+  </body>
+</html>
