@@ -3,237 +3,105 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Nexus Commerce | E-commerce Tech</title>
-    <meta
-      name="description"
-      content="Marketplace de tecnologia com areas para clientes, vendedores, administradores, empresas e suporte."
-    />
+    <title>Nexus Commerce | Marketplace de Tecnologia</title>
+    <meta name="description" content="Marketplace premium de tecnologia com notebooks, smartphones, componentes, perifericos, software e smart home." />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
-      rel="stylesheet"
-    />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
-    <div class="shell">
-      <aside class="sidebar">
-        <a class="brand" href="#home" aria-label="Nexus Commerce">
-          <span class="brand-mark">N</span>
-          <span>
-            <strong>Nexus</strong>
-            <small>Commerce OS</small>
-          </span>
+    <header class="market-header">
+      <div class="header-main container">
+        <a class="market-logo" href="index.html" aria-label="Nexus Commerce">
+          <strong>NEXUS</strong><span>COMMERCE</span>
         </a>
+        <button class="category-trigger" id="categoryTrigger">☰ <span>Todas as categorias</span></button>
+        <form class="market-search" action="produtos.html">
+          <input name="q" type="search" placeholder="Buscar produtos, categorias, marcas..." />
+          <button aria-label="Buscar">⌕</button>
+        </form>
+        <a class="account-link" href="login.html">Ola! Faca seu<br /><strong>login ou cadastre-se</strong></a>
+        <a class="icon-link" href="#favoritos">♡ <span>Favoritos</span></a>
+        <a class="icon-link cart-link" href="#carrinho">🛒 <span>Carrinho</span><b id="cartCount">2</b></a>
+      </div>
+      <nav class="category-nav container" aria-label="Categorias">
+        <a class="active" href="produtos.html">💻 Notebooks</a>
+        <a href="produtos.html">📱 Smartphones</a>
+        <a href="produtos.html">🧩 Componentes</a>
+        <a href="produtos.html">⌨️ Perifericos</a>
+        <a href="produtos.html">◎ Software</a>
+        <a href="produtos.html">🎮 Games</a>
+        <a href="produtos.html">🏠 Smart Home</a>
+        <a href="produtos.html">🎧 Audio</a>
+        <a href="produtos.html">🖥️ Monitores</a>
+        <a href="produtos.html">⭐ Mais vendidos</a>
+        <a href="produtos.html">🏷️ Ofertas</a>
+      </nav>
+    </header>
 
-        <nav class="nav" aria-label="Navegacao principal">
-          <a class="nav-link active" href="#home" data-page="home">Inicio</a>
-          <a class="nav-link" href="#cliente" data-page="cliente">Cliente</a>
-          <a class="nav-link" href="#vendedor" data-page="vendedor">Vendedor</a>
-          <a class="nav-link" href="#admin" data-page="admin">Admin geral</a>
-          <a class="nav-link" href="#b2b" data-page="b2b">Clientes de clientes</a>
-          <a class="nav-link" href="#suporte" data-page="suporte">Suporte</a>
-        </nav>
-
-        <div class="sidebar-card">
-          <span class="pulse"></span>
-          <p>Status da plataforma</p>
-          <strong>99,98% online</strong>
-          <small>Checkout, pagamentos e estoque sincronizados.</small>
+    <main class="container page-space">
+      <section class="hero-market">
+        <div class="hero-copy">
+          <span class="eyebrow">Tecnologia sem limites</span>
+          <h1>Upgrade seu mundo com as melhores ofertas</h1>
+          <p>Notebooks, componentes, perifericos, games e software com ate 40% OFF, frete gratis e entrega rapida.</p>
+          <a class="primary-button" href="produtos.html">Aproveitar ofertas →</a>
         </div>
-      </aside>
+        <div class="hero-device" aria-hidden="true">
+          <div class="sale-badge">ATE<br /><strong>40%</strong><br />OFF</div>
+          <div class="laptop-art"><span>N</span></div>
+        </div>
+        <aside class="hero-benefits">
+          <div>🚚 <strong>Frete gratis</strong><small>Para todo o Brasil</small></div>
+          <div>⚡ <strong>Entrega rapida</strong><small>Receba amanha*</small></div>
+          <div>💳 <strong>Ate 10x sem juros</strong><small>Em milhares de produtos</small></div>
+          <div>🛡️ <strong>Compra segura</strong><small>Seus dados protegidos</small></div>
+        </aside>
+      </section>
 
-      <main class="main">
-        <header class="topbar">
-          <button class="menu-button" id="menuButton" aria-label="Abrir menu">☰</button>
-          <div class="search">
-            <span>⌕</span>
-            <input id="searchInput" type="search" placeholder="Buscar notebooks, componentes, licencas, servicos..." />
+      <section class="deals-layout">
+        <div class="panel wide-panel">
+          <div class="section-title inline-title">
+            <div><span>⚡ Ofertas relampago</span><h2>Termina em <b class="timer">08 : 34 : 12</b></h2></div>
+            <a href="produtos.html">Ver todas</a>
           </div>
-          <button class="ghost-button" id="themeButton">Modo neon</button>
-          <button class="primary-button" data-page-target="cliente">Entrar como cliente</button>
-        </header>
+          <div class="deal-grid" id="flashDeals"></div>
+        </div>
+        <aside class="prime-card">
+          <span>NEXUS PRIME</span>
+          <h3>Ofertas exclusivas para membros</h3>
+          <p>Descontos especiais, frete rapido, cashback e suporte prioritario.</p>
+          <a class="primary-button" href="login.html">Assinar agora</a>
+        </aside>
+      </section>
 
-        <section id="home" class="page active-page">
-          <div class="hero grid-2">
-            <div>
-              <span class="eyebrow">Marketplace de tecnologia completo</span>
-              <h1>Venda hardware, software, servicos e assinaturas em uma experiencia premium.</h1>
-              <p>
-                Um prototipo de e-commerce de ponta com vitrines inteligentes, areas separadas por perfil,
-                operacao de vendedores, painel administrativo, clientes B2B e jornada de pos-venda.
-              </p>
-              <div class="hero-actions">
-                <button class="primary-button" data-page-target="cliente">Explorar loja</button>
-                <button class="secondary-button" data-page-target="admin">Ver operacao</button>
-              </div>
-            </div>
-            <div class="hero-panel glass-card">
-              <div class="revenue-card">
-                <span>GMV mensal</span>
-                <strong>R$ 2,84 mi</strong>
-                <small>+31% vs. mes anterior</small>
-              </div>
-              <div class="mini-chart" aria-label="Grafico decorativo">
-                <i style="height: 34%"></i><i style="height: 56%"></i><i style="height: 48%"></i><i style="height: 74%"></i><i style="height: 88%"></i><i style="height: 63%"></i>
-              </div>
-              <div class="metric-row">
-                <div><strong>18,2k</strong><span>clientes</span></div>
-                <div><strong>412</strong><span>vendedores</span></div>
-                <div><strong>96%</strong><span>SLA</span></div>
-              </div>
-            </div>
-          </div>
+      <section class="panel">
+        <div class="section-title inline-title">
+          <div><span>Destaques em tecnologia</span><h2>Produtos selecionados para voce</h2></div>
+          <a href="produtos.html">Ver todos</a>
+        </div>
+        <div class="highlight-row" id="featuredProducts"></div>
+      </section>
 
-          <div class="section-heading">
-            <span>Modulos</span>
-            <h2>Janelas principais da plataforma</h2>
-          </div>
-          <div class="module-grid" id="moduleGrid"></div>
+      <section class="panel brands-panel">
+        <div class="section-title inline-title">
+          <div><span>Marcas lideres</span><h2>Compre por marca</h2></div>
+          <a href="produtos.html">Ver todas</a>
+        </div>
+        <div class="brand-row">
+          <strong>ASUS</strong><strong>SAMSUNG</strong><strong>logitech</strong><strong>XBOX</strong><strong>CORSAIR</strong><strong>GIGABYTE</strong><strong>acer</strong><strong>HYPERX</strong><strong>intel</strong>
+        </div>
+      </section>
 
-          <div class="section-heading">
-            <span>Catalogo</span>
-            <h2>Produtos em destaque</h2>
-          </div>
-          <div class="product-grid" id="homeProducts"></div>
-        </section>
-
-        <section id="cliente" class="page">
-          <div class="page-header">
-            <div>
-              <span class="eyebrow">Janela do cliente</span>
-              <h1>Compra inteligente para tecnologia</h1>
-              <p>Busca, recomendacoes, carrinho, pedidos, garantias, pontos e atendimento em uma jornada unica.</p>
-            </div>
-            <div class="profile-card">
-              <span>Cliente Prime</span>
-              <strong>Mariana Costa</strong>
-              <small>Score 942 • Frete express liberado</small>
-            </div>
-          </div>
-          <div class="layout-3-1">
-            <div>
-              <div class="tabs" role="tablist">
-                <button class="tab active" data-filter="todos">Todos</button>
-                <button class="tab" data-filter="hardware">Hardware</button>
-                <button class="tab" data-filter="software">Software</button>
-                <button class="tab" data-filter="servicos">Servicos</button>
-              </div>
-              <div class="product-grid" id="clientProducts"></div>
-            </div>
-            <aside class="checkout-card glass-card">
-              <h3>Carrinho</h3>
-              <div id="cartItems" class="cart-items"></div>
-              <div class="coupon">
-                <span>Cupom aplicado</span>
-                <strong>TECH10</strong>
-              </div>
-              <div class="total-row"><span>Subtotal</span><strong id="cartSubtotal">R$ 0,00</strong></div>
-              <div class="total-row"><span>Desconto</span><strong id="cartDiscount">R$ 0,00</strong></div>
-              <div class="total-row grand"><span>Total</span><strong id="cartTotal">R$ 0,00</strong></div>
-              <button class="primary-button full">Finalizar compra</button>
-            </aside>
-          </div>
-        </section>
-
-        <section id="vendedor" class="page">
-          <div class="page-header">
-            <div>
-              <span class="eyebrow">Janela do vendedor</span>
-              <h1>Central de operacao do seller</h1>
-              <p>Pedidos, estoque, repasse financeiro, anuncios, performance e reputacao do vendedor.</p>
-            </div>
-            <button class="primary-button">Cadastrar produto</button>
-          </div>
-          <div class="kpi-grid" id="sellerKpis"></div>
-          <div class="grid-2">
-            <div class="panel">
-              <h3>Fila de pedidos</h3>
-              <div id="sellerOrders" class="table-list"></div>
-            </div>
-            <div class="panel">
-              <h3>Estoque critico</h3>
-              <div id="stockList" class="table-list"></div>
-            </div>
-          </div>
-        </section>
-
-        <section id="admin" class="page">
-          <div class="page-header">
-            <div>
-              <span class="eyebrow">Administrador geral</span>
-              <h1>Command center do marketplace</h1>
-              <p>Controle de GMV, vendedores, categorias, disputas, risco, pagamentos e saude da plataforma.</p>
-            </div>
-            <button class="primary-button">Gerar relatorio executivo</button>
-          </div>
-          <div class="kpi-grid" id="adminKpis"></div>
-          <div class="grid-2">
-            <div class="panel">
-              <h3>Governanca de vendedores</h3>
-              <div id="sellerGovernance" class="table-list"></div>
-            </div>
-            <div class="panel">
-              <h3>Alertas de risco</h3>
-              <div id="riskAlerts" class="table-list"></div>
-            </div>
-          </div>
-        </section>
-
-        <section id="b2b" class="page">
-          <div class="page-header">
-            <div>
-              <span class="eyebrow">Clientes de clientes</span>
-              <h1>Portal B2B para empresas, equipes e revendedores</h1>
-              <p>Ambiente para compradores corporativos criarem subcontas, aprovacoes, limites e contratos.</p>
-            </div>
-            <button class="primary-button">Criar conta empresarial</button>
-          </div>
-          <div class="grid-2">
-            <div class="panel">
-              <h3>Contas corporativas</h3>
-              <div id="b2bAccounts" class="table-list"></div>
-            </div>
-            <div class="panel">
-              <h3>Fluxo de aprovacao</h3>
-              <div class="approval-flow">
-                <div><strong>1</strong><span>Solicitante monta carrinho</span></div>
-                <div><strong>2</strong><span>Gestor aprova orcamento</span></div>
-                <div><strong>3</strong><span>Financeiro valida pagamento</span></div>
-                <div><strong>4</strong><span>Pedido vai para expedicao</span></div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section id="suporte" class="page">
-          <div class="page-header">
-            <div>
-              <span class="eyebrow">Pos-venda e suporte</span>
-              <h1>Experiencia completa depois da compra</h1>
-              <p>Tickets, garantia, devolucao, rastreio, base de conhecimento e atendimento com IA.</p>
-            </div>
-            <button class="primary-button">Abrir chamado</button>
-          </div>
-          <div class="grid-2">
-            <div class="panel">
-              <h3>Tickets prioritarios</h3>
-              <div id="tickets" class="table-list"></div>
-            </div>
-            <div class="panel ai-panel">
-              <span class="eyebrow">Assistente Nexus AI</span>
-              <h3>Como posso ajudar?</h3>
-              <p>Identifiquei que seu notebook gamer esta dentro da garantia estendida. Posso abrir troca expressa ou agendar coleta.</p>
-              <div class="chat-actions">
-                <button class="secondary-button">Abrir troca</button>
-                <button class="secondary-button">Falar com humano</button>
-              </div>
-            </div>
-          </div>
-        </section>
-      </main>
-    </div>
+      <section class="panel">
+        <div class="section-title inline-title">
+          <div><span>Recomendado para voce</span><h2>Mais buscados hoje</h2></div>
+          <a href="produtos.html">Ver mais</a>
+        </div>
+        <div class="product-grid home-grid" id="recommendedProducts"></div>
+      </section>
+    </main>
 
     <script src="app.js"></script>
   </body>
