@@ -2,7 +2,7 @@ import { FormEvent, useEffect, useMemo, useState } from 'react'
 import { useAuth0 } from '@auth0/auth0-react'
 import { Search, ShoppingCart, Heart, UserRound, Star, Truck, ShieldCheck, Zap, Loader2, LogOut, CheckCircle2, PackageCheck } from 'lucide-react'
 import { cents, Product, Category } from './types'
-import { getCategories, getProducts, getMe, syncProfile, getCart, addCartItem, createOrder, getOrders, Cart, Order } from './api'
+import { getCategories, getProducts, getMe, syncProfile, getCart, addCartItem, createOrder, getOrders, getSellerDashboard, getSellerProducts, getSellerOrders, Cart, Order, SellerDashboard as SellerDashboardData } from './api'
 
 const fallbackProducts: Product[] = [
   { id: '1', name: 'Notebook Gamer Pro 16', slug: 'notebook-gamer-pro-16', description: 'Notebook gamer com GPU dedicada, tela rapida, 16GB RAM e SSD.', imageEmoji: '💻', priceCents: 699900, oldPriceCents: 849900, stock: 18, rating: 4.8, reviewCount: 256, sellerName: 'Nexus Oficial', categorySlug: 'notebooks' },
@@ -11,231 +11,34 @@ const fallbackProducts: Product[] = [
   { id: '4', name: 'Mouse Gamer Logitech G502 HERO 25K DPI', slug: 'mouse-logitech-g502-hero', description: 'Mouse gamer de alta precisao com RGB e botoes programaveis.', imageEmoji: '🖱️', priceCents: 33990, oldPriceCents: 39990, stock: 80, rating: 4.6, reviewCount: 621, sellerName: 'Logitech Store', categorySlug: 'perifericos' },
   { id: '5', name: 'Console Microsoft Xbox Series S 512GB SSD', slug: 'console-xbox-series-s-512gb', description: 'Console de nova geracao compacto com SSD e Game Pass.', imageEmoji: '🎮', priceCents: 219900, oldPriceCents: null, stock: 33, rating: 4.8, reviewCount: 1102, sellerName: 'Microsoft Store', categorySlug: 'games' },
 ]
-
 const fallbackCategories: Category[] = [
-  { id: 'notebooks', name: 'Notebooks', slug: 'notebooks', icon: '💻' },
-  { id: 'smartphones', name: 'Smartphones', slug: 'smartphones', icon: '📱' },
-  { id: 'componentes', name: 'Componentes', slug: 'componentes', icon: '🧩' },
-  { id: 'perifericos', name: 'Perifericos', slug: 'perifericos', icon: '⌨️' },
-  { id: 'games', name: 'Games', slug: 'games', icon: '🎮' },
+  { id: 'notebooks', name: 'Notebooks', slug: 'notebooks', icon: '💻' }, { id: 'smartphones', name: 'Smartphones', slug: 'smartphones', icon: '📱' }, { id: 'componentes', name: 'Componentes', slug: 'componentes', icon: '🧩' }, { id: 'perifericos', name: 'Perifericos', slug: 'perifericos', icon: '⌨️' }, { id: 'games', name: 'Games', slug: 'games', icon: '🎮' },
 ]
 
 function Header({ categories, onSearch, cartCount }: { categories: Category[]; onSearch: (value: string) => void; cartCount: number }) {
   const [term, setTerm] = useState('')
   const { isAuthenticated, user, loginWithRedirect, logout } = useAuth0()
-
-  function submit(event: FormEvent) {
-    event.preventDefault()
-    onSearch(term)
-    document.getElementById('produtos')?.scrollIntoView({ behavior: 'smooth' })
-  }
-
-  return (
-    <header className="market-header">
-      <div className="header-main container">
-        <a className="market-logo" href="#home"><strong>NEXUS</strong><span>COMMERCE</span></a>
-        <button className="category-trigger">☰ <span>Todas as categorias</span></button>
-        <form className="market-search" onSubmit={submit}>
-          <input placeholder="Buscar produtos, categorias, marcas..." value={term} onChange={(event) => setTerm(event.target.value)} />
-          <button aria-label="Buscar"><Search size={18} /></button>
-        </form>
-        {isAuthenticated ? (
-          <button className="account-link" onClick={() => logout({ logoutParams: { returnTo: window.location.origin } })}>
-            <LogOut size={18} /> <span>{user?.name || 'Sair'}</span>
-          </button>
-        ) : (
-          <button className="account-link" onClick={() => loginWithRedirect()}><UserRound size={18} /> <span>Entrar</span></button>
-        )}
-        <button className="icon-link"><Heart size={22} /><span>Favoritos</span></button>
-        <a className="icon-link cart-link" href="#carrinho"><ShoppingCart size={22} /><span>Carrinho</span><b>{cartCount}</b></a>
-      </div>
-      <nav className="category-nav container">
-        {categories.map((item, index) => <a className={index === 0 ? 'active' : ''} href="#produtos" key={item.slug}>{item.icon} {item.name}</a>)}
-        <a href="#pedidos">📦 Meus pedidos</a>
-        <a href="#vendedor">🏪 Vendedor</a>
-        <a href="#produtos">⭐ Mais vendidos</a>
-        <a href="#produtos">🏷️ Ofertas</a>
-      </nav>
-    </header>
-  )
+  function submit(event: FormEvent) { event.preventDefault(); onSearch(term); document.getElementById('produtos')?.scrollIntoView({ behavior: 'smooth' }) }
+  return <header className="market-header"><div className="header-main container"><a className="market-logo" href="#home"><strong>NEXUS</strong><span>COMMERCE</span></a><button className="category-trigger">☰ <span>Todas as categorias</span></button><form className="market-search" onSubmit={submit}><input placeholder="Buscar produtos, categorias, marcas..." value={term} onChange={(event) => setTerm(event.target.value)} /><button aria-label="Buscar"><Search size={18} /></button></form>{isAuthenticated ? <button className="account-link" onClick={() => logout({ logoutParams: { returnTo: window.location.origin } })}><LogOut size={18} /> <span>{user?.name || 'Sair'}</span></button> : <button className="account-link" onClick={() => loginWithRedirect()}><UserRound size={18} /> <span>Entrar</span></button>}<button className="icon-link"><Heart size={22} /><span>Favoritos</span></button><a className="icon-link cart-link" href="#carrinho"><ShoppingCart size={22} /><span>Carrinho</span><b>{cartCount}</b></a></div><nav className="category-nav container">{categories.map((item, index) => <a className={index === 0 ? 'active' : ''} href="#produtos" key={item.slug}>{item.icon} {item.name}</a>)}<a href="#pedidos">📦 Meus pedidos</a><a href="#vendedor">🏪 Vendedor</a><a href="#produtos">⭐ Mais vendidos</a><a href="#produtos">🏷️ Ofertas</a></nav></header>
 }
-
 function ProductCard({ product, onAddToCart, isAdding }: { product: Product; onAddToCart: (product: Product) => void; isAdding: boolean }) {
-  return (
-    <article className="product-card">
-      <div className="product-badges"><span className="badge">Oferta</span><button className="wish">♡</button></div>
-      <div className="product-img">{product.imageEmoji}</div>
-      <h3>{product.name}</h3>
-      <div className="rating"><Star size={14} fill="currentColor" /> {product.rating} <small>({product.reviewCount})</small> <span className="seller">• {product.sellerName}</span></div>
-      <div className="price"><strong>{cents(product.priceCents)}</strong>{product.oldPriceCents ? <del>{cents(product.oldPriceCents)}</del> : null}</div>
-      <div className="installments">10x de {cents(product.priceCents / 10)} sem juros</div>
-      <div className="product-tags"><span className="tag">Frete gratis</span><span className="tag">Entrega rapida</span></div>
-      <button className="outline-button full add-cart-button" disabled={isAdding} onClick={() => onAddToCart(product)}>
-        {isAdding ? 'Adicionando...' : 'Adicionar ao carrinho'}
-      </button>
-    </article>
-  )
+  return <article className="product-card"><div className="product-badges"><span className="badge">Oferta</span><button className="wish">♡</button></div><div className="product-img">{product.imageEmoji}</div><h3>{product.name}</h3><div className="rating"><Star size={14} fill="currentColor" /> {product.rating} <small>({product.reviewCount})</small> <span className="seller">• {product.sellerName}</span></div><div className="price"><strong>{cents(product.priceCents)}</strong>{product.oldPriceCents ? <del>{cents(product.oldPriceCents)}</del> : null}</div><div className="installments">10x de {cents(product.priceCents / 10)} sem juros</div><div className="product-tags"><span className="tag">Frete gratis</span><span className="tag">Entrega rapida</span></div><button className="outline-button full add-cart-button" disabled={isAdding} onClick={() => onAddToCart(product)}>{isAdding ? 'Adicionando...' : 'Adicionar ao carrinho'}</button></article>
 }
-
 function CartPanel({ cart, status, onCheckout, isCheckingOut, lastOrder }: { cart?: Cart; status: string; onCheckout: () => void; isCheckingOut: boolean; lastOrder?: Order }) {
-  return (
-    <section className="cart-panel" id="carrinho">
-      <div>
-        <span className="eyebrow">Checkout realista</span>
-        <h2>Seu carrinho</h2>
-        <p>{status}</p>
-      </div>
-      <div className="cart-summary">
-        <strong>{cart?.itemCount || 0} itens</strong>
-        <span>{cents(cart?.totalCents || 0)}</span>
-        <button className="primary-button full" disabled={isCheckingOut || !cart?.itemCount} onClick={onCheckout}>
-          {isCheckingOut ? 'Finalizando...' : 'Finalizar pedido'}
-        </button>
-      </div>
-      <div className="cart-items-list">
-        {cart?.items?.length ? cart.items.map(item => (
-          <div className="cart-row" key={item.productId}>
-            <span>{item.imageEmoji}</span>
-            <div><strong>{item.name}</strong><small>{item.quantity}x • {item.sellerName}</small></div>
-            <b>{cents(item.lineTotal)}</b>
-          </div>
-        )) : <small className="seller">Entre na conta e adicione produtos para salvar o carrinho no PostgreSQL.</small>}
-      </div>
-      {lastOrder ? (
-        <div className="order-success">
-          <CheckCircle2 size={28} />
-          <div>
-            <strong>Pedido criado com sucesso</strong>
-            <small>Pedido {lastOrder.orderId.slice(0, 8)} • Status {lastOrder.status} • Total {cents(lastOrder.totalCents)}</small>
-          </div>
-        </div>
-      ) : null}
-    </section>
-  )
+  return <section className="cart-panel" id="carrinho"><div><span className="eyebrow">Checkout realista</span><h2>Seu carrinho</h2><p>{status}</p></div><div className="cart-summary"><strong>{cart?.itemCount || 0} itens</strong><span>{cents(cart?.totalCents || 0)}</span><button className="primary-button full" disabled={isCheckingOut || !cart?.itemCount} onClick={onCheckout}>{isCheckingOut ? 'Finalizando...' : 'Finalizar pedido'}</button></div><div className="cart-items-list">{cart?.items?.length ? cart.items.map(item => <div className="cart-row" key={item.productId}><span>{item.imageEmoji}</span><div><strong>{item.name}</strong><small>{item.quantity}x • {item.sellerName}</small></div><b>{cents(item.lineTotal)}</b></div>) : <small className="seller">Entre na conta e adicione produtos para salvar o carrinho no PostgreSQL.</small>}</div>{lastOrder ? <div className="order-success"><CheckCircle2 size={28} /><div><strong>Pedido criado com sucesso</strong><small>Pedido {lastOrder.orderId.slice(0, 8)} • Status {lastOrder.status} • Total {cents(lastOrder.totalCents)}</small></div></div> : null}</section>
 }
-
 function OrdersPanel({ orders, status, isLoading }: { orders: Order[]; status: string; isLoading: boolean }) {
-  return (
-    <section className="orders-panel" id="pedidos">
-      <div className="orders-header">
-        <div>
-          <span className="eyebrow">Historico do cliente</span>
-          <h2>Meus pedidos</h2>
-          <p>{status}</p>
-        </div>
-        {isLoading ? <span className="chip"><Loader2 size={14} /> Carregando pedidos</span> : null}
-      </div>
-      <div className="orders-list">
-        {orders.length ? orders.map(order => (
-          <article className="order-card" key={order.orderId}>
-            <div className="order-card-top">
-              <div><strong>Pedido {order.orderId.slice(0, 8)}</strong><small>{new Date(order.createdAt).toLocaleString('pt-BR')}</small></div>
-              <span className="status-pill">{order.status}</span>
-              <b>{cents(order.totalCents)}</b>
-            </div>
-            <div className="order-items-mini">
-              {order.items.map(item => <span key={`${order.orderId}-${item.productId}`}>{item.imageEmoji} {item.quantity}x {item.name}</span>)}
-            </div>
-          </article>
-        )) : (
-          <div className="empty-orders">
-            <PackageCheck size={32} />
-            <div><strong>Nenhum pedido encontrado</strong><small>Finalize um carrinho para criar seu primeiro pedido.</small></div>
-          </div>
-        )}
-      </div>
-    </section>
-  )
+  return <section className="orders-panel" id="pedidos"><div className="orders-header"><div><span className="eyebrow">Historico do cliente</span><h2>Meus pedidos</h2><p>{status}</p></div>{isLoading ? <span className="chip"><Loader2 size={14} /> Carregando pedidos</span> : null}</div><div className="orders-list">{orders.length ? orders.map(order => <article className="order-card" key={order.orderId}><div className="order-card-top"><div><strong>Pedido {order.orderId.slice(0, 8)}</strong><small>{new Date(order.createdAt).toLocaleString('pt-BR')}</small></div><span className="status-pill">{order.status}</span><b>{cents(order.totalCents)}</b></div><div className="order-items-mini">{order.items.map(item => <span key={`${order.orderId}-${item.productId}`}>{item.imageEmoji} {item.quantity}x {item.name}</span>)}</div></article>) : <div className="empty-orders"><PackageCheck size={32} /><div><strong>Nenhum pedido encontrado</strong><small>Finalize um carrinho para criar seu primeiro pedido.</small></div></div>}</div></section>
 }
-
-function SellerDashboard({ products, orders }: { products: Product[]; orders: Order[] }) {
-  const sellerName = products[0]?.sellerName || 'Nexus Oficial'
-  const sellerProducts = products.filter(product => product.sellerName === sellerName)
-  const sellerProductIds = new Set(sellerProducts.map(product => product.id))
-  const sellerOrderItems = orders.flatMap(order => order.items.filter(item => sellerProductIds.has(item.productId)))
-  const sellerRevenue = sellerOrderItems.reduce((total, item) => total + item.lineTotal, 0)
-  const sellerStock = sellerProducts.reduce((total, product) => total + product.stock, 0)
-
-  return (
-    <section className="seller-panel" id="vendedor">
-      <div className="orders-header">
-        <div>
-          <span className="eyebrow">Central do vendedor</span>
-          <h2>Dashboard do vendedor</h2>
-          <p>Painel inicial para acompanhar produtos, estoque, pedidos recebidos e receita por seller.</p>
-        </div>
-        <span className="status-pill">{sellerName}</span>
-      </div>
-
-      <div className="seller-kpis">
-        <div><small>Produtos ativos</small><strong>{sellerProducts.length}</strong></div>
-        <div><small>Estoque total</small><strong>{sellerStock}</strong></div>
-        <div><small>Itens vendidos</small><strong>{sellerOrderItems.reduce((total, item) => total + item.quantity, 0)}</strong></div>
-        <div><small>Receita capturada</small><strong>{cents(sellerRevenue)}</strong></div>
-      </div>
-
-      <div className="seller-columns">
-        <div>
-          <h3>Produtos do vendedor</h3>
-          <div className="seller-list">
-            {sellerProducts.map(product => (
-              <div className="seller-row" key={product.id}>
-                <span>{product.imageEmoji}</span>
-                <div><strong>{product.name}</strong><small>Estoque {product.stock} • {cents(product.priceCents)}</small></div>
-                <b>{product.rating} ★</b>
-              </div>
-            ))}
-          </div>
-        </div>
-        <div>
-          <h3>Pedidos recebidos</h3>
-          <div className="seller-list">
-            {sellerOrderItems.length ? sellerOrderItems.slice(0, 6).map((item, index) => (
-              <div className="seller-row" key={`${item.productId}-${index}`}>
-                <span>{item.imageEmoji}</span>
-                <div><strong>{item.name}</strong><small>{item.quantity} unidade(s) vendida(s)</small></div>
-                <b>{cents(item.lineTotal)}</b>
-              </div>
-            )) : <small className="seller">Nenhum pedido recebido para este seller ainda.</small>}
-          </div>
-        </div>
-      </div>
-    </section>
-  )
+function SellerDashboard({ dashboard, products, orders, status, isLoading }: { dashboard?: SellerDashboardData; products: Product[]; orders: Order[]; status: string; isLoading: boolean }) {
+  const sellerName = dashboard?.sellerName || products[0]?.sellerName || 'Nexus Oficial'
+  const orderItems = orders.flatMap(order => order.items)
+  return <section className="seller-panel" id="vendedor"><div className="orders-header"><div><span className="eyebrow">Central do vendedor</span><h2>Dashboard do vendedor</h2><p>{status}</p></div>{isLoading ? <span className="chip"><Loader2 size={14} /> Carregando seller</span> : <span className="status-pill">{sellerName}</span>}</div><div className="seller-kpis"><div><small>Produtos ativos</small><strong>{dashboard?.productsActive ?? products.length}</strong></div><div><small>Estoque total</small><strong>{dashboard?.stockTotal ?? products.reduce((t, p) => t + p.stock, 0)}</strong></div><div><small>Itens vendidos</small><strong>{dashboard?.itemsSold ?? orderItems.reduce((t, i) => t + i.quantity, 0)}</strong></div><div><small>Receita capturada</small><strong>{cents(dashboard?.revenueCents ?? orderItems.reduce((t, i) => t + i.lineTotal, 0))}</strong></div></div><div className="seller-columns"><div><h3>Produtos do vendedor</h3><div className="seller-list">{products.length ? products.map(product => <div className="seller-row" key={product.id}><span>{product.imageEmoji}</span><div><strong>{product.name}</strong><small>Estoque {product.stock} • {cents(product.priceCents)}</small></div><b>{product.rating} ★</b></div>) : <small className="seller">Nenhum produto encontrado para este seller.</small>}</div></div><div><h3>Pedidos recebidos</h3><div className="seller-list">{orderItems.length ? orderItems.slice(0, 6).map((item, index) => <div className="seller-row" key={`${item.productId}-${index}`}><span>{item.imageEmoji}</span><div><strong>{item.name}</strong><small>{item.quantity} unidade(s) vendida(s)</small></div><b>{cents(item.lineTotal)}</b></div>) : <small className="seller">Nenhum pedido recebido para este seller ainda.</small>}</div></div></div></section>
 }
-
 function LoginPanel({ authStatus }: { authStatus: string }) {
   const { isAuthenticated, user, loginWithRedirect, logout, isLoading } = useAuth0()
-
-  if (isAuthenticated) {
-    return (
-      <section className="auth-card" id="login">
-        <h2>Conta conectada</h2>
-        <p>Seu perfil esta conectado ao Auth0 e sincronizado com a API quando o token estiver valido.</p>
-        <div className="profile-mini">
-          {user?.picture ? <img src={user.picture} alt={user.name || 'Usuario'} /> : <UserRound size={42} />}
-          <div><strong>{user?.name || 'Usuario Nexus'}</strong><small>{user?.email}</small></div>
-        </div>
-        <p className="secure-note">{authStatus}</p>
-        <button className="outline-button full" onClick={() => logout({ logoutParams: { returnTo: window.location.origin } })}>Sair</button>
-      </section>
-    )
-  }
-
-  return (
-    <section className="auth-card" id="login">
-      <h2>Entrar ou cadastrar</h2>
-      <p>Entre com Auth0 usando Google, Apple, Microsoft ou email/senha, conforme as conexoes ativadas no painel Auth0.</p>
-      <div className="social-stack">
-        <button disabled={isLoading} className="social-button google" onClick={() => loginWithRedirect({ authorizationParams: { connection: 'google-oauth2' } })}><i>G</i> Continuar com Google</button>
-        <button disabled={isLoading} className="social-button apple" onClick={() => loginWithRedirect({ authorizationParams: { connection: 'apple' } })}><i></i> Continuar com Apple</button>
-        <button disabled={isLoading} className="social-button microsoft" onClick={() => loginWithRedirect({ authorizationParams: { connection: 'windowslive' } })}><i>▦</i> Continuar com Microsoft</button>
-      </div>
-      <div className="divider">ou</div>
-      <button className="primary-button full" onClick={() => loginWithRedirect()}>Entrar com Auth0 Universal Login</button>
-      <p className="secure-note">{authStatus}</p>
-    </section>
-  )
+  if (isAuthenticated) return <section className="auth-card" id="login"><h2>Conta conectada</h2><p>Seu perfil esta conectado ao Auth0 e sincronizado com a API quando o token estiver valido.</p><div className="profile-mini">{user?.picture ? <img src={user.picture} alt={user.name || 'Usuario'} /> : <UserRound size={42} />}<div><strong>{user?.name || 'Usuario Nexus'}</strong><small>{user?.email}</small></div></div><p className="secure-note">{authStatus}</p><button className="outline-button full" onClick={() => logout({ logoutParams: { returnTo: window.location.origin } })}>Sair</button></section>
+  return <section className="auth-card" id="login"><h2>Entrar ou cadastrar</h2><p>Entre com Auth0 usando Google, Apple, Microsoft ou email/senha, conforme as conexoes ativadas no painel Auth0.</p><div className="social-stack"><button disabled={isLoading} className="social-button google" onClick={() => loginWithRedirect({ authorizationParams: { connection: 'google-oauth2' } })}><i>G</i> Continuar com Google</button><button disabled={isLoading} className="social-button apple" onClick={() => loginWithRedirect({ authorizationParams: { connection: 'apple' } })}><i></i> Continuar com Apple</button><button disabled={isLoading} className="social-button microsoft" onClick={() => loginWithRedirect({ authorizationParams: { connection: 'windowslive' } })}><i>▦</i> Continuar com Microsoft</button></div><div className="divider">ou</div><button className="primary-button full" onClick={() => loginWithRedirect()}>Entrar com Auth0 Universal Login</button><p className="secure-note">{authStatus}</p></section>
 }
 
 export function App() {
@@ -247,127 +50,28 @@ export function App() {
   const [authStatus, setAuthStatus] = useState('Configure VITE_AUTH0_DOMAIN, VITE_AUTH0_CLIENT_ID e VITE_AUTH0_AUDIENCE para ativar login real.')
   const [cartStatus, setCartStatus] = useState('Carrinho local aguardando login.')
   const [ordersStatus, setOrdersStatus] = useState('Entre na conta para carregar seus pedidos.')
+  const [sellerStatus, setSellerStatus] = useState('Entre com perfil seller ou admin para carregar dados reais do vendedor.')
   const [cart, setCart] = useState<Cart | undefined>()
   const [lastOrder, setLastOrder] = useState<Order | undefined>()
   const [orders, setOrders] = useState<Order[]>([])
+  const [sellerDashboard, setSellerDashboard] = useState<SellerDashboardData | undefined>()
+  const [sellerProducts, setSellerProducts] = useState<Product[]>(fallbackProducts.filter(p => p.sellerName === 'Nexus Oficial'))
+  const [sellerOrders, setSellerOrders] = useState<Order[]>([])
   const [addingProductId, setAddingProductId] = useState<string | null>(null)
   const [isCheckingOut, setIsCheckingOut] = useState(false)
   const [isLoadingOrders, setIsLoadingOrders] = useState(false)
+  const [isLoadingSeller, setIsLoadingSeller] = useState(false)
   const { isAuthenticated, user, getAccessTokenSilently, loginWithRedirect } = useAuth0()
 
-  useEffect(() => {
-    async function load() {
-      setIsLoadingCatalog(true)
-      try {
-        const [apiCategories, apiProducts] = await Promise.all([getCategories(), getProducts(search)])
-        if (apiCategories.length) setCategories(apiCategories)
-        if (apiProducts.length) setProducts(apiProducts)
-        setApiStatus('Catalogo conectado a API Go/PostgreSQL.')
-      } catch (error) {
-        setApiStatus('API indisponivel. Exibindo catalogo local de demonstracao.')
-      } finally {
-        setIsLoadingCatalog(false)
-      }
-    }
-    load()
-  }, [search])
+  useEffect(() => { async function load() { setIsLoadingCatalog(true); try { const [apiCategories, apiProducts] = await Promise.all([getCategories(), getProducts(search)]); if (apiCategories.length) setCategories(apiCategories); if (apiProducts.length) setProducts(apiProducts); setApiStatus('Catalogo conectado a API Go/PostgreSQL.') } catch { setApiStatus('API indisponivel. Exibindo catalogo local de demonstracao.') } finally { setIsLoadingCatalog(false) } } load() }, [search])
+  async function loadOrders(token: string) { setIsLoadingOrders(true); try { const loadedOrders = await getOrders(token); setOrders(loadedOrders); setOrdersStatus(loadedOrders.length ? 'Pedidos carregados do PostgreSQL.' : 'Nenhum pedido encontrado para este usuario.') } catch { setOrdersStatus('Nao foi possivel carregar seus pedidos protegidos.') } finally { setIsLoadingOrders(false) } }
+  async function loadSeller(token: string) { setIsLoadingSeller(true); try { const [dashboard, sellerProductsData, sellerOrdersData] = await Promise.all([getSellerDashboard(token), getSellerProducts(token), getSellerOrders(token)]); setSellerDashboard(dashboard); setSellerProducts(sellerProductsData); setSellerOrders(sellerOrdersData); setSellerStatus('Dashboard do vendedor carregado dos endpoints dedicados da API.') } catch { setSellerStatus('API do vendedor indisponivel ou perfil sem permissao seller/admin. Exibindo fallback visual.') } finally { setIsLoadingSeller(false) } }
 
-  async function loadOrders(token: string) {
-    setIsLoadingOrders(true)
-    try {
-      const loadedOrders = await getOrders(token)
-      setOrders(loadedOrders)
-      setOrdersStatus(loadedOrders.length ? 'Pedidos carregados do PostgreSQL.' : 'Nenhum pedido encontrado para este usuario.')
-    } catch (error) {
-      setOrdersStatus('Nao foi possivel carregar seus pedidos protegidos.')
-    } finally {
-      setIsLoadingOrders(false)
-    }
-  }
+  useEffect(() => { async function syncAuthenticatedProfile() { if (!isAuthenticated || !user) return; try { const token = await getAccessTokenSilently(); await syncProfile(token, { email: user.email, name: user.name, pictureUrl: user.picture }); const me = await getMe(token); setAuthStatus(`Perfil sincronizado como ${me.profile?.role || 'customer'}.`); const loadedCart = await getCart(token); setCart(loadedCart); setCartStatus('Carrinho carregado do PostgreSQL.'); await loadOrders(token); await loadSeller(token) } catch { setAuthStatus('Login detectado, mas a API protegida ainda nao aceitou o token. Verifique Auth0 audience e dominio.'); setCartStatus('Nao foi possivel carregar o carrinho protegido.'); setOrdersStatus('Nao foi possivel carregar os pedidos protegidos.') } } syncAuthenticatedProfile() }, [getAccessTokenSilently, isAuthenticated, user])
 
-  useEffect(() => {
-    async function syncAuthenticatedProfile() {
-      if (!isAuthenticated || !user) return
-      try {
-        const token = await getAccessTokenSilently()
-        await syncProfile(token, { email: user.email, name: user.name, pictureUrl: user.picture })
-        const me = await getMe(token)
-        setAuthStatus(`Perfil sincronizado como ${me.profile?.role || 'customer'}.`)
-        const loadedCart = await getCart(token)
-        setCart(loadedCart)
-        setCartStatus('Carrinho carregado do PostgreSQL.')
-        await loadOrders(token)
-      } catch (error) {
-        setAuthStatus('Login detectado, mas a API protegida ainda nao aceitou o token. Verifique Auth0 audience e dominio.')
-        setCartStatus('Nao foi possivel carregar o carrinho protegido.')
-        setOrdersStatus('Nao foi possivel carregar os pedidos protegidos.')
-      }
-    }
-    syncAuthenticatedProfile()
-  }, [getAccessTokenSilently, isAuthenticated, user])
-
-  async function handleAddToCart(product: Product) {
-    if (!isAuthenticated) {
-      setCartStatus('Entre na conta para salvar o carrinho no PostgreSQL.')
-      await loginWithRedirect()
-      return
-    }
-    setAddingProductId(product.id)
-    setLastOrder(undefined)
-    try {
-      const token = await getAccessTokenSilently()
-      const updatedCart = await addCartItem(token, product.id, 1)
-      setCart(updatedCart)
-      setCartStatus(`${product.name} foi adicionado ao carrinho persistente.`)
-    } catch (error) {
-      setCartStatus('Nao foi possivel adicionar o item. Verifique API, Auth0 e banco.')
-    } finally {
-      setAddingProductId(null)
-    }
-  }
-
-  async function handleCheckout() {
-    if (!isAuthenticated) {
-      setCartStatus('Entre na conta para finalizar o pedido.')
-      await loginWithRedirect()
-      return
-    }
-    setIsCheckingOut(true)
-    try {
-      const token = await getAccessTokenSilently()
-      const order = await createOrder(token)
-      setLastOrder(order)
-      const newCart = await getCart(token)
-      setCart(newCart)
-      await loadOrders(token)
-      setCartStatus('Pedido criado e carrinho convertido no PostgreSQL.')
-    } catch (error) {
-      setCartStatus('Nao foi possivel finalizar o pedido. Verifique se o carrinho tem itens e se a API esta ativa.')
-    } finally {
-      setIsCheckingOut(false)
-    }
-  }
+  async function handleAddToCart(product: Product) { if (!isAuthenticated) { setCartStatus('Entre na conta para salvar o carrinho no PostgreSQL.'); await loginWithRedirect(); return } setAddingProductId(product.id); setLastOrder(undefined); try { const token = await getAccessTokenSilently(); const updatedCart = await addCartItem(token, product.id, 1); setCart(updatedCart); setCartStatus(`${product.name} foi adicionado ao carrinho persistente.`) } catch { setCartStatus('Nao foi possivel adicionar o item. Verifique API, Auth0 e banco.') } finally { setAddingProductId(null) } }
+  async function handleCheckout() { if (!isAuthenticated) { setCartStatus('Entre na conta para finalizar o pedido.'); await loginWithRedirect(); return } setIsCheckingOut(true); try { const token = await getAccessTokenSilently(); const order = await createOrder(token); setLastOrder(order); const newCart = await getCart(token); setCart(newCart); await loadOrders(token); await loadSeller(token); setCartStatus('Pedido criado e carrinho convertido no PostgreSQL.') } catch { setCartStatus('Nao foi possivel finalizar o pedido. Verifique se o carrinho tem itens e se a API esta ativa.') } finally { setIsCheckingOut(false) } }
 
   const featured = useMemo(() => products.slice(0, 6), [products])
-
-  return (
-    <>
-      <Header categories={categories} onSearch={setSearch} cartCount={cart?.itemCount || 0} />
-      <main className="container page-space">
-        <section className="hero-market" id="home">
-          <div className="hero-copy"><span className="eyebrow">Tecnologia sem limites</span><h1>Upgrade seu mundo com as melhores ofertas</h1><p>Marketplace real com React, API Go, PostgreSQL e login Auth0 preparado para Google, Apple e Microsoft.</p><a className="primary-button" href="#produtos">Ver ofertas</a></div>
-          <div className="hero-device"><div className="sale-badge">ATE<br /><strong>40%</strong><br />OFF</div><div className="laptop-art"><span>N</span></div></div>
-          <aside className="hero-benefits"><div><Truck /><strong>Frete gratis</strong><small>Para todo o Brasil</small></div><div><Zap /><strong>Entrega rapida</strong><small>Receba amanha</small></div><div><ShieldCheck /><strong>Compra segura</strong><small>Pagamento protegido</small></div></aside>
-        </section>
-        <section className="products-layout" id="produtos">
-          <aside className="filters"><section className="filter-box"><h3>Filtros</h3><div className="check-list"><label><span><input type="checkbox" /> Notebooks</span><small>386</small></label><label><span><input type="checkbox" /> Frete gratis</span><small>Gratis</small></label><label><span><input type="checkbox" /> Entrega rapida</span><small>Turbo</small></label></div></section></aside>
-          <section><div className="listing-top"><div><h1>Produtos de tecnologia</h1><p>{apiStatus}</p></div><select><option>Mais relevantes</option></select></div><div className="chips"><span className="chip">Em promocao</span><span className="chip">Frete gratis</span>{isLoadingCatalog ? <span className="chip"><Loader2 size={14} /> Carregando</span> : null}</div><div className="product-grid listing-grid">{featured.map(product => <ProductCard product={product} key={product.id} onAddToCart={handleAddToCart} isAdding={addingProductId === product.id} />)}</div></section>
-        </section>
-        <CartPanel cart={cart} status={cartStatus} onCheckout={handleCheckout} isCheckingOut={isCheckingOut} lastOrder={lastOrder} />
-        <OrdersPanel orders={orders} status={ordersStatus} isLoading={isLoadingOrders} />
-        <SellerDashboard products={products} orders={orders} />
-        <section className="auth-page"><div className="auth-shell"><section className="auth-hero"><span className="eyebrow">Auth0</span><h1>Login social pronto para producao.</h1><p>Configure as conexoes Google, Apple e Microsoft no painel do Auth0 e a aplicacao usa os tokens para chamar a API protegida em Go.</p></section><LoginPanel authStatus={authStatus} /></div></section>
-      </main>
-    </>
-  )
+  return <><Header categories={categories} onSearch={setSearch} cartCount={cart?.itemCount || 0} /><main className="container page-space"><section className="hero-market" id="home"><div className="hero-copy"><span className="eyebrow">Tecnologia sem limites</span><h1>Upgrade seu mundo com as melhores ofertas</h1><p>Marketplace real com React, API Go, PostgreSQL e login Auth0 preparado para Google, Apple e Microsoft.</p><a className="primary-button" href="#produtos">Ver ofertas</a></div><div className="hero-device"><div className="sale-badge">ATE<br /><strong>40%</strong><br />OFF</div><div className="laptop-art"><span>N</span></div></div><aside className="hero-benefits"><div><Truck /><strong>Frete gratis</strong><small>Para todo o Brasil</small></div><div><Zap /><strong>Entrega rapida</strong><small>Receba amanha</small></div><div><ShieldCheck /><strong>Compra segura</strong><small>Pagamento protegido</small></div></aside></section><section className="products-layout" id="produtos"><aside className="filters"><section className="filter-box"><h3>Filtros</h3><div className="check-list"><label><span><input type="checkbox" /> Notebooks</span><small>386</small></label><label><span><input type="checkbox" /> Frete gratis</span><small>Gratis</small></label><label><span><input type="checkbox" /> Entrega rapida</span><small>Turbo</small></label></div></section></aside><section><div className="listing-top"><div><h1>Produtos de tecnologia</h1><p>{apiStatus}</p></div><select><option>Mais relevantes</option></select></div><div className="chips"><span className="chip">Em promocao</span><span className="chip">Frete gratis</span>{isLoadingCatalog ? <span className="chip"><Loader2 size={14} /> Carregando</span> : null}</div><div className="product-grid listing-grid">{featured.map(product => <ProductCard product={product} key={product.id} onAddToCart={handleAddToCart} isAdding={addingProductId === product.id} />)}</div></section></section><CartPanel cart={cart} status={cartStatus} onCheckout={handleCheckout} isCheckingOut={isCheckingOut} lastOrder={lastOrder} /><OrdersPanel orders={orders} status={ordersStatus} isLoading={isLoadingOrders} /><SellerDashboard dashboard={sellerDashboard} products={sellerProducts} orders={sellerOrders} status={sellerStatus} isLoading={isLoadingSeller} /><section className="auth-page"><div className="auth-shell"><section className="auth-hero"><span className="eyebrow">Auth0</span><h1>Login social pronto para producao.</h1><p>Configure as conexoes Google, Apple e Microsoft no painel do Auth0 e a aplicacao usa os tokens para chamar a API protegida em Go.</p></section><LoginPanel authStatus={authStatus} /></div></section></main></>
 }
