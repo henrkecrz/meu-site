@@ -30,6 +30,20 @@ export type Order = {
   createdAt: string
 }
 
+export type SellerDashboard = {
+  sellerId: string
+  sellerName: string
+  productsActive: number
+  stockTotal: number
+  itemsSold: number
+  revenueCents: number
+  ordersCount: number
+}
+
+function authHeaders(accessToken: string) {
+  return { Authorization: `Bearer ${accessToken}` }
+}
+
 export async function getCategories(): Promise<Category[]> {
   const response = await fetch(`${API_URL}/api/categories`)
   if (!response.ok) throw new Error('Erro ao buscar categorias')
@@ -47,11 +61,7 @@ export async function getProducts(search = '', category = ''): Promise<Product[]
 }
 
 export async function getMe(accessToken: string) {
-  const response = await fetch(`${API_URL}/api/me`, {
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-    },
-  })
+  const response = await fetch(`${API_URL}/api/me`, { headers: authHeaders(accessToken) })
   if (!response.ok) throw new Error('Sessao invalida')
   return response.json()
 }
@@ -60,7 +70,7 @@ export async function syncProfile(accessToken: string, profile: { email?: string
   const response = await fetch(`${API_URL}/api/profile/sync`, {
     method: 'POST',
     headers: {
-      Authorization: `Bearer ${accessToken}`,
+      ...authHeaders(accessToken),
       'Content-Type': 'application/json',
     },
     body: JSON.stringify(profile),
@@ -70,11 +80,7 @@ export async function syncProfile(accessToken: string, profile: { email?: string
 }
 
 export async function getCart(accessToken: string): Promise<Cart> {
-  const response = await fetch(`${API_URL}/api/cart`, {
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-    },
-  })
+  const response = await fetch(`${API_URL}/api/cart`, { headers: authHeaders(accessToken) })
   if (!response.ok) throw new Error('Erro ao buscar carrinho')
   return response.json()
 }
@@ -83,7 +89,7 @@ export async function addCartItem(accessToken: string, productId: string, quanti
   const response = await fetch(`${API_URL}/api/cart/items`, {
     method: 'POST',
     headers: {
-      Authorization: `Bearer ${accessToken}`,
+      ...authHeaders(accessToken),
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({ productId, quantity }),
@@ -93,11 +99,7 @@ export async function addCartItem(accessToken: string, productId: string, quanti
 }
 
 export async function getOrders(accessToken: string): Promise<Order[]> {
-  const response = await fetch(`${API_URL}/api/orders`, {
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-    },
-  })
+  const response = await fetch(`${API_URL}/api/orders`, { headers: authHeaders(accessToken) })
   if (!response.ok) throw new Error('Erro ao buscar pedidos')
   return response.json()
 }
@@ -106,10 +108,28 @@ export async function createOrder(accessToken: string): Promise<Order> {
   const response = await fetch(`${API_URL}/api/orders`, {
     method: 'POST',
     headers: {
-      Authorization: `Bearer ${accessToken}`,
+      ...authHeaders(accessToken),
       'Content-Type': 'application/json',
     },
   })
   if (!response.ok) throw new Error('Erro ao criar pedido')
+  return response.json()
+}
+
+export async function getSellerDashboard(accessToken: string): Promise<SellerDashboard> {
+  const response = await fetch(`${API_URL}/api/seller/dashboard`, { headers: authHeaders(accessToken) })
+  if (!response.ok) throw new Error('Erro ao buscar dashboard do vendedor')
+  return response.json()
+}
+
+export async function getSellerProducts(accessToken: string): Promise<Product[]> {
+  const response = await fetch(`${API_URL}/api/seller/products`, { headers: authHeaders(accessToken) })
+  if (!response.ok) throw new Error('Erro ao buscar produtos do vendedor')
+  return response.json()
+}
+
+export async function getSellerOrders(accessToken: string): Promise<Order[]> {
+  const response = await fetch(`${API_URL}/api/seller/orders`, { headers: authHeaders(accessToken) })
+  if (!response.ok) throw new Error('Erro ao buscar pedidos do vendedor')
   return response.json()
 }
