@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Notebooks e Computadores | Nexus Commerce</title>
+    <meta name="description" content="Compre notebooks, computadores e tecnologia no marketplace Nexus Commerce." />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="market-header">
+      <div class="header-main container">
+        <a class="market-logo" href="index.html"><strong>NEXUS</strong><span>COMMERCE</span></a>
+        <button class="category-trigger">☰ <span>Todas as categorias</span></button>
+        <form class="market-search" action="produtos.html"><input name="q" type="search" placeholder="Buscar produtos, categorias, marcas..." /><button>⌕</button></form>
+        <a class="account-link" href="login.html">Ola! Faca seu<br /><strong>login ou cadastre-se</strong></a>
+        <a class="icon-link" href="#">♡ <span>Favoritos</span></a>
+        <a class="icon-link cart-link" href="#">🛒 <span>Carrinho</span><b id="cartCount">2</b></a>
+      </div>
+      <nav class="category-nav container">
+        <a class="active" href="produtos.html">💻 Notebooks</a><a href="produtos.html">📱 Smartphones</a><a href="produtos.html">🧩 Componentes</a><a href="produtos.html">⌨️ Perifericos</a><a href="produtos.html">◎ Software</a><a href="produtos.html">🎮 Games</a><a href="produtos.html">🏠 Smart Home</a><a href="produtos.html">🎧 Audio</a><a href="produtos.html">🖥️ Monitores</a><a href="produtos.html">⭐ Mais vendidos</a><a href="produtos.html">🏷️ Ofertas</a>
+      </nav>
+    </header>
+
+    <main class="container page-space products-layout">
+      <aside class="filters">
+        <section class="filter-box"><h3>Preço</h3><div class="price-inputs"><input value="R$ 1.000" /><input value="R$ 20.000" /></div><div class="range-line"></div><button class="outline-button full">Aplicar filtro</button></section>
+        <section class="filter-box"><h4>Marca</h4><input class="filter-search" placeholder="Buscar marca" /><div class="check-list"><label><span><input type="checkbox" /> ASUS</span><small>62</small></label><label><span><input type="checkbox" /> Acer</span><small>48</small></label><label><span><input type="checkbox" /> Lenovo</span><small>44</small></label><label><span><input type="checkbox" /> Dell</span><small>37</small></label><label><span><input type="checkbox" /> Samsung</span><small>21</small></label><label><span><input type="checkbox" /> Apple</span><small>19</small></label><a class="filter-link" href="#">Ver mais</a></div></section>
+        <section class="filter-box"><h4>Processador</h4><div class="check-list"><label><span><input type="checkbox" /> Intel Core i3</span><small>34</small></label><label><span><input type="checkbox" /> Intel Core i5</span><small>92</small></label><label><span><input type="checkbox" /> Intel Core i7</span><small>88</small></label><label><span><input type="checkbox" /> Intel Core i9</span><small>38</small></label><label><span><input type="checkbox" /> AMD Ryzen 5</span><small>53</small></label><label><span><input type="checkbox" /> AMD Ryzen 7</span><small>61</small></label></div></section>
+        <section class="filter-box"><h4>Memória RAM</h4><div class="check-list"><label><span><input type="checkbox" /> 8GB</span><small>141</small></label><label><span><input type="checkbox" /> 16GB</span><small>188</small></label><label><span><input type="checkbox" /> 32GB</span><small>44</small></label></div></section>
+        <section class="filter-box"><h4>Avaliação</h4><div class="check-list"><label><span><input type="checkbox" /> ⭐⭐⭐⭐⭐</span><small>126</small></label><label><span><input type="checkbox" /> ⭐⭐⭐⭐ ou mais</span><small>228</small></label><label><span><input type="checkbox" /> ⭐⭐⭐ ou mais</span><small>312</small></label></div></section>
+        <section class="filter-box"><h4>Entrega</h4><div class="check-list"><label><span><input type="checkbox" /> Entrega rapida</span><small>Turbo</small></label><label><span><input type="checkbox" /> Frete gratis</span><small>Gratis</small></label><label><span><input type="checkbox" /> Vendido por loja oficial</span><small>Pro</small></label></div></section>
+      </aside>
+
+      <section>
+        <div class="breadcrumb">Inicio › Notebooks</div>
+        <div class="listing-top">
+          <div><h1>Notebooks e Computadores</h1><p id="resultCount">Mostrando 1-24 de 386 resultados</p></div>
+          <label>Ordenar por: <select><option>Mais relevantes</option><option>Menor preço</option><option>Melhor avaliação</option><option>Mais vendidos</option></select></label>
+        </div>
+        <div class="chips"><span class="chip">Em promoção ×</span><span class="chip">Frete grátis ×</span><span class="chip">Entrega rápida ×</span><a class="clear-chip" href="#">Limpar filtros</a></div>
+        <div class="product-grid listing-grid" id="listingGrid"></div>
+        <nav class="pagination"><span>Anterior</span><a class="current" href="#">1</a><a href="#">2</a><a href="#">3</a><a href="#">4</a><span>...</span><a href="#">17</a><a href="#">Próxima ›</a></nav>
+      </section>
+    </main>
+    <script src="app.js"></script>
+  </body>
+</html>
