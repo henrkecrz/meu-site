@@ -27,3 +27,16 @@ export async function getMe(accessToken: string) {
   if (!response.ok) throw new Error('Sessao invalida')
   return response.json()
 }
+
+export async function syncProfile(accessToken: string, profile: { email?: string; name?: string; pictureUrl?: string }) {
+  const response = await fetch(`${API_URL}/api/profile/sync`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(profile),
+  })
+  if (!response.ok) throw new Error('Erro ao sincronizar perfil')
+  return response.json()
+}
