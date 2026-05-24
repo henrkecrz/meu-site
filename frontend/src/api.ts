@@ -92,6 +92,16 @@ export async function addCartItem(accessToken: string, productId: string, quanti
   return response.json()
 }
 
+export async function getOrders(accessToken: string): Promise<Order[]> {
+  const response = await fetch(`${API_URL}/api/orders`, {
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+    },
+  })
+  if (!response.ok) throw new Error('Erro ao buscar pedidos')
+  return response.json()
+}
+
 export async function createOrder(accessToken: string): Promise<Order> {
   const response = await fetch(`${API_URL}/api/orders`, {
     method: 'POST',
