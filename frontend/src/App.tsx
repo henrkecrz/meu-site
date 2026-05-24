@@ -1,8 +1,8 @@
 import { FormEvent, useEffect, useMemo, useState } from 'react'
 import { useAuth0 } from '@auth0/auth0-react'
-import { Search, ShoppingCart, Heart, UserRound, Star, Truck, ShieldCheck, Zap, Loader2, LogOut, CheckCircle2 } from 'lucide-react'
+import { Search, ShoppingCart, Heart, UserRound, Star, Truck, ShieldCheck, Zap, Loader2, LogOut, CheckCircle2, PackageCheck } from 'lucide-react'
 import { cents, Product, Category } from './types'
-import { getCategories, getProducts, getMe, syncProfile, getCart, addCartItem, createOrder, Cart, Order } from './api'
+import { getCategories, getProducts, getMe, syncProfile, getCart, addCartItem, createOrder, getOrders, Cart, Order } from './api'
 
 const fallbackProducts: Product[] = [
   { id: '1', name: 'Notebook Gamer Pro 16', slug: 'notebook-gamer-pro-16', description: 'Notebook gamer com GPU dedicada, tela rapida, 16GB RAM e SSD.', imageEmoji: '💻', priceCents: 699900, oldPriceCents: 849900, stock: 18, rating: 4.8, reviewCount: 256, sellerName: 'Nexus Oficial', categorySlug: 'notebooks' },
@@ -51,6 +51,7 @@ function Header({ categories, onSearch, cartCount }: { categories: Category[]; o
       </div>
       <nav className="category-nav container">
         {categories.map((item, index) => <a className={index === 0 ? 'active' : ''} href="#produtos" key={item.slug}>{item.icon} {item.name}</a>)}
+        <a href="#pedidos">📦 Meus pedidos</a>
         <a href="#produtos">⭐ Mais vendidos</a>
         <a href="#produtos">🏷️ Ofertas</a>
       </nav>
@@ -112,6 +113,40 @@ function CartPanel({ cart, status, onCheckout, isCheckingOut, lastOrder }: { car
   )
 }
 
+function OrdersPanel({ orders, status, isLoading }: { orders: Order[]; status: string; isLoading: boolean }) {
+  return (
+    <section className="orders-panel" id="pedidos">
+      <div className="orders-header">
+        <div>
+          <span className="eyebrow">Historico do cliente</span>
+          <h2>Meus pedidos</h2>
+          <p>{status}</p>
+        </div>
+        {isLoading ? <span className="chip"><Loader2 size={14} /> Carregando pedidos</span> : null}
+      </div>
+      <div className="orders-list">
+        {orders.length ? orders.map(order => (
+          <article className="order-card" key={order.orderId}>
+            <div className="order-card-top">
+              <div><strong>Pedido {order.orderId.slice(0, 8)}</strong><small>{new Date(order.createdAt).toLocaleString('pt-BR')}</small></div>
+              <span className="status-pill">{order.status}</span>
+              <b>{cents(order.totalCents)}</b>
+            </div>
+            <div className="order-items-mini">
+              {order.items.map(item => <span key={`${order.orderId}-${item.productId}`}>{item.imageEmoji} {item.quantity}x {item.name}</span>)}
+            </div>
+          </article>
+        )) : (
+          <div className="empty-orders">
+            <PackageCheck size={32} />
+            <div><strong>Nenhum pedido encontrado</strong><small>Finalize um carrinho para criar seu primeiro pedido.</small></div>
+          </div>
+        )}
+      </div>
+    </section>
+  )
+}
+
 function LoginPanel({ authStatus }: { authStatus: string }) {
   const { isAuthenticated, user, loginWithRedirect, logout, isLoading } = useAuth0()
 
@@ -154,10 +189,13 @@ export function App() {
   const [apiStatus, setApiStatus] = useState('Usando dados locais enquanto a API carrega.')
   const [authStatus, setAuthStatus] = useState('Configure VITE_AUTH0_DOMAIN, VITE_AUTH0_CLIENT_ID e VITE_AUTH0_AUDIENCE para ativar login real.')
   const [cartStatus, setCartStatus] = useState('Carrinho local aguardando login.')
+  const [ordersStatus, setOrdersStatus] = useState('Entre na conta para carregar seus pedidos.')
   const [cart, setCart] = useState<Cart | undefined>()
   const [lastOrder, setLastOrder] = useState<Order | undefined>()
+  const [orders, setOrders] = useState<Order[]>([])
   const [addingProductId, setAddingProductId] = useState<string | null>(null)
   const [isCheckingOut, setIsCheckingOut] = useState(false)
+  const [isLoadingOrders, setIsLoadingOrders] = useState(false)
   const { isAuthenticated, user, getAccessTokenSilently, loginWithRedirect } = useAuth0()
 
   useEffect(() => {
@@ -177,6 +215,19 @@ export function App() {
     load()
   }, [search])
 
+  async function loadOrders(token: string) {
+    setIsLoadingOrders(true)
+    try {
+      const loadedOrders = await getOrders(token)
+      setOrders(loadedOrders)
+      setOrdersStatus(loadedOrders.length ? 'Pedidos carregados do PostgreSQL.' : 'Nenhum pedido encontrado para este usuario.')
+    } catch (error) {
+      setOrdersStatus('Nao foi possivel carregar seus pedidos protegidos.')
+    } finally {
+      setIsLoadingOrders(false)
+    }
+  }
+
   useEffect(() => {
     async function syncAuthenticatedProfile() {
       if (!isAuthenticated || !user) return
@@ -188,9 +239,11 @@ export function App() {
         const loadedCart = await getCart(token)
         setCart(loadedCart)
         setCartStatus('Carrinho carregado do PostgreSQL.')
+        await loadOrders(token)
       } catch (error) {
         setAuthStatus('Login detectado, mas a API protegida ainda nao aceitou o token. Verifique Auth0 audience e dominio.')
         setCartStatus('Nao foi possivel carregar o carrinho protegido.')
+        setOrdersStatus('Nao foi possivel carregar os pedidos protegidos.')
       }
     }
     syncAuthenticatedProfile()
@@ -229,6 +282,7 @@ export function App() {
       setLastOrder(order)
       const newCart = await getCart(token)
       setCart(newCart)
+      await loadOrders(token)
       setCartStatus('Pedido criado e carrinho convertido no PostgreSQL.')
     } catch (error) {
       setCartStatus('Nao foi possivel finalizar o pedido. Verifique se o carrinho tem itens e se a API esta ativa.')
@@ -253,6 +307,7 @@ export function App() {
           <section><div className="listing-top"><div><h1>Produtos de tecnologia</h1><p>{apiStatus}</p></div><select><option>Mais relevantes</option></select></div><div className="chips"><span className="chip">Em promocao</span><span className="chip">Frete gratis</span>{isLoadingCatalog ? <span className="chip"><Loader2 size={14} /> Carregando</span> : null}</div><div className="product-grid listing-grid">{featured.map(product => <ProductCard product={product} key={product.id} onAddToCart={handleAddToCart} isAdding={addingProductId === product.id} />)}</div></section>
         </section>
         <CartPanel cart={cart} status={cartStatus} onCheckout={handleCheckout} isCheckingOut={isCheckingOut} lastOrder={lastOrder} />
+        <OrdersPanel orders={orders} status={ordersStatus} isLoading={isLoadingOrders} />
         <section className="auth-page"><div className="auth-shell"><section className="auth-hero"><span className="eyebrow">Auth0</span><h1>Login social pronto para producao.</h1><p>Configure as conexoes Google, Apple e Microsoft no painel do Auth0 e a aplicacao usa os tokens para chamar a API protegida em Go.</p></section><LoginPanel authStatus={authStatus} /></div></section>
       </main>
     </>
