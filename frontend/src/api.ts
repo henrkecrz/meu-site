@@ -22,6 +22,14 @@ export type Cart = {
   totalCents: number
 }
 
+export type Order = {
+  orderId: string
+  status: string
+  totalCents: number
+  items: CartItem[]
+  createdAt: string
+}
+
 export async function getCategories(): Promise<Category[]> {
   const response = await fetch(`${API_URL}/api/categories`)
   if (!response.ok) throw new Error('Erro ao buscar categorias')
@@ -81,5 +89,17 @@ export async function addCartItem(accessToken: string, productId: string, quanti
     body: JSON.stringify({ productId, quantity }),
   })
   if (!response.ok) throw new Error('Erro ao adicionar item ao carrinho')
+  return response.json()
+}
+
+export async function createOrder(accessToken: string): Promise<Order> {
+  const response = await fetch(`${API_URL}/api/orders`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      'Content-Type': 'application/json',
+    },
+  })
+  if (!response.ok) throw new Error('Erro ao criar pedido')
   return response.json()
 }
