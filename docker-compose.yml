@@ -26,10 +26,12 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-    env_file:
-      - ./backend/.env.example
     environment:
+      PORT: 8080
+      FRONTEND_ORIGIN: http://localhost:5173
       DATABASE_URL: postgres://nexus:nexus_dev_password@postgres:5432/nexus_commerce?sslmode=disable
+      AUTH0_DOMAIN: ${AUTH0_DOMAIN:-}
+      AUTH0_AUDIENCE: ${AUTH0_AUDIENCE:-}
     ports:
       - "8080:8080"
 
@@ -40,10 +42,13 @@ services:
     restart: unless-stopped
     depends_on:
       - api
+    environment:
+      VITE_API_URL: http://localhost:8080
+      VITE_AUTH0_DOMAIN: ${AUTH0_DOMAIN:-}
+      VITE_AUTH0_CLIENT_ID: ${AUTH0_CLIENT_ID:-}
+      VITE_AUTH0_AUDIENCE: ${AUTH0_AUDIENCE:-}
     ports:
       - "5173:5173"
-    env_file:
-      - ./frontend/.env.example
 
 volumes:
   postgres_data:
