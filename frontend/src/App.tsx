@@ -2,7 +2,7 @@ import { FormEvent, useEffect, useMemo, useState } from 'react'
 import { useAuth0 } from '@auth0/auth0-react'
 import { Search, ShoppingCart, Heart, UserRound, Star, Truck, ShieldCheck, Zap, Loader2, LogOut } from 'lucide-react'
 import { cents, Product, Category } from './types'
-import { getCategories, getProducts, getMe, syncProfile } from './api'
+import { getCategories, getProducts, getMe, syncProfile, getCart, addCartItem, Cart } from './api'
 
 const fallbackProducts: Product[] = [
   { id: '1', name: 'Notebook Gamer Pro 16', slug: 'notebook-gamer-pro-16', description: 'Notebook gamer com GPU dedicada, tela rapida, 16GB RAM e SSD.', imageEmoji: '💻', priceCents: 699900, oldPriceCents: 849900, stock: 18, rating: 4.8, reviewCount: 256, sellerName: 'Nexus Oficial', categorySlug: 'notebooks' },
@@ -20,7 +20,7 @@ const fallbackCategories: Category[] = [
   { id: 'games', name: 'Games', slug: 'games', icon: '🎮' },
 ]
 
-function Header({ categories, onSearch }: { categories: Category[]; onSearch: (value: string) => void }) {
+function Header({ categories, onSearch, cartCount }: { categories: Category[]; onSearch: (value: string) => void; cartCount: number }) {
   const [term, setTerm] = useState('')
   const { isAuthenticated, user, loginWithRedirect, logout } = useAuth0()
 
@@ -47,7 +47,7 @@ function Header({ categories, onSearch }: { categories: Category[]; onSearch: (v
           <button className="account-link" onClick={() => loginWithRedirect()}><UserRound size={18} /> <span>Entrar</span></button>
         )}
         <button className="icon-link"><Heart size={22} /><span>Favoritos</span></button>
-        <button className="icon-link cart-link"><ShoppingCart size={22} /><span>Carrinho</span><b>2</b></button>
+        <a className="icon-link cart-link" href="#carrinho"><ShoppingCart size={22} /><span>Carrinho</span><b>{cartCount}</b></a>
       </div>
       <nav className="category-nav container">
         {categories.map((item, index) => <a className={index === 0 ? 'active' : ''} href="#produtos" key={item.slug}>{item.icon} {item.name}</a>)}
@@ -58,7 +58,7 @@ function Header({ categories, onSearch }: { categories: Category[]; onSearch: (v
   )
 }
 
-function ProductCard({ product }: { product: Product }) {
+function ProductCard({ product, onAddToCart, isAdding }: { product: Product; onAddToCart: (product: Product) => void; isAdding: boolean }) {
   return (
     <article className="product-card">
       <div className="product-badges"><span className="badge">Oferta</span><button className="wish">♡</button></div>
@@ -68,7 +68,35 @@ function ProductCard({ product }: { product: Product }) {
       <div className="price"><strong>{cents(product.priceCents)}</strong>{product.oldPriceCents ? <del>{cents(product.oldPriceCents)}</del> : null}</div>
       <div className="installments">10x de {cents(product.priceCents / 10)} sem juros</div>
       <div className="product-tags"><span className="tag">Frete gratis</span><span className="tag">Entrega rapida</span></div>
+      <button className="outline-button full add-cart-button" disabled={isAdding} onClick={() => onAddToCart(product)}>
+        {isAdding ? 'Adicionando...' : 'Adicionar ao carrinho'}
+      </button>
     </article>
+  )
+}
+
+function CartPanel({ cart, status }: { cart?: Cart; status: string }) {
+  return (
+    <section className="cart-panel" id="carrinho">
+      <div>
+        <span className="eyebrow">Carrinho persistente</span>
+        <h2>Seu carrinho</h2>
+        <p>{status}</p>
+      </div>
+      <div className="cart-summary">
+        <strong>{cart?.itemCount || 0} itens</strong>
+        <span>{cents(cart?.totalCents || 0)}</span>
+      </div>
+      <div className="cart-items-list">
+        {cart?.items?.length ? cart.items.map(item => (
+          <div className="cart-row" key={item.productId}>
+            <span>{item.imageEmoji}</span>
+            <div><strong>{item.name}</strong><small>{item.quantity}x • {item.sellerName}</small></div>
+            <b>{cents(item.lineTotal)}</b>
+          </div>
+        )) : <small className="seller">Entre na conta e adicione produtos para salvar o carrinho no PostgreSQL.</small>}
+      </div>
+    </section>
   )
 }
 
@@ -113,7 +141,10 @@ export function App() {
   const [isLoadingCatalog, setIsLoadingCatalog] = useState(false)
   const [apiStatus, setApiStatus] = useState('Usando dados locais enquanto a API carrega.')
   const [authStatus, setAuthStatus] = useState('Configure VITE_AUTH0_DOMAIN, VITE_AUTH0_CLIENT_ID e VITE_AUTH0_AUDIENCE para ativar login real.')
-  const { isAuthenticated, user, getAccessTokenSilently } = useAuth0()
+  const [cartStatus, setCartStatus] = useState('Carrinho local aguardando login.')
+  const [cart, setCart] = useState<Cart | undefined>()
+  const [addingProductId, setAddingProductId] = useState<string | null>(null)
+  const { isAuthenticated, user, getAccessTokenSilently, loginWithRedirect } = useAuth0()
 
   useEffect(() => {
     async function load() {
@@ -140,18 +171,41 @@ export function App() {
         await syncProfile(token, { email: user.email, name: user.name, pictureUrl: user.picture })
         const me = await getMe(token)
         setAuthStatus(`Perfil sincronizado como ${me.profile?.role || 'customer'}.`)
+        const loadedCart = await getCart(token)
+        setCart(loadedCart)
+        setCartStatus('Carrinho carregado do PostgreSQL.')
       } catch (error) {
         setAuthStatus('Login detectado, mas a API protegida ainda nao aceitou o token. Verifique Auth0 audience e dominio.')
+        setCartStatus('Nao foi possivel carregar o carrinho protegido.')
       }
     }
     syncAuthenticatedProfile()
   }, [getAccessTokenSilently, isAuthenticated, user])
 
+  async function handleAddToCart(product: Product) {
+    if (!isAuthenticated) {
+      setCartStatus('Entre na conta para salvar o carrinho no PostgreSQL.')
+      await loginWithRedirect()
+      return
+    }
+    setAddingProductId(product.id)
+    try {
+      const token = await getAccessTokenSilently()
+      const updatedCart = await addCartItem(token, product.id, 1)
+      setCart(updatedCart)
+      setCartStatus(`${product.name} foi adicionado ao carrinho persistente.`)
+    } catch (error) {
+      setCartStatus('Nao foi possivel adicionar o item. Verifique API, Auth0 e banco.')
+    } finally {
+      setAddingProductId(null)
+    }
+  }
+
   const featured = useMemo(() => products.slice(0, 6), [products])
 
   return (
     <>
-      <Header categories={categories} onSearch={setSearch} />
+      <Header categories={categories} onSearch={setSearch} cartCount={cart?.itemCount || 0} />
       <main className="container page-space">
         <section className="hero-market" id="home">
           <div className="hero-copy"><span className="eyebrow">Tecnologia sem limites</span><h1>Upgrade seu mundo com as melhores ofertas</h1><p>Marketplace real com React, API Go, PostgreSQL e login Auth0 preparado para Google, Apple e Microsoft.</p><a className="primary-button" href="#produtos">Ver ofertas</a></div>
@@ -160,8 +214,9 @@ export function App() {
         </section>
         <section className="products-layout" id="produtos">
           <aside className="filters"><section className="filter-box"><h3>Filtros</h3><div className="check-list"><label><span><input type="checkbox" /> Notebooks</span><small>386</small></label><label><span><input type="checkbox" /> Frete gratis</span><small>Gratis</small></label><label><span><input type="checkbox" /> Entrega rapida</span><small>Turbo</small></label></div></section></aside>
-          <section><div className="listing-top"><div><h1>Produtos de tecnologia</h1><p>{apiStatus}</p></div><select><option>Mais relevantes</option></select></div><div className="chips"><span className="chip">Em promocao</span><span className="chip">Frete gratis</span>{isLoadingCatalog ? <span className="chip"><Loader2 size={14} /> Carregando</span> : null}</div><div className="product-grid listing-grid">{featured.map(product => <ProductCard product={product} key={product.id} />)}</div></section>
+          <section><div className="listing-top"><div><h1>Produtos de tecnologia</h1><p>{apiStatus}</p></div><select><option>Mais relevantes</option></select></div><div className="chips"><span className="chip">Em promocao</span><span className="chip">Frete gratis</span>{isLoadingCatalog ? <span className="chip"><Loader2 size={14} /> Carregando</span> : null}</div><div className="product-grid listing-grid">{featured.map(product => <ProductCard product={product} key={product.id} onAddToCart={handleAddToCart} isAdding={addingProductId === product.id} />)}</div></section>
         </section>
+        <CartPanel cart={cart} status={cartStatus} />
         <section className="auth-page"><div className="auth-shell"><section className="auth-hero"><span className="eyebrow">Auth0</span><h1>Login social pronto para producao.</h1><p>Configure as conexoes Google, Apple e Microsoft no painel do Auth0 e a aplicacao usa os tokens para chamar a API protegida em Go.</p></section><LoginPanel authStatus={authStatus} /></div></section>
       </main>
     </>
