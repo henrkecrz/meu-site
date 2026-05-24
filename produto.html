@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Produto | Nexus Commerce</title>
+    <meta name="description" content="Detalhe de produto no Nexus Commerce." />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="market-header">
+      <div class="header-main container">
+        <a class="market-logo" href="index.html"><strong>NEXUS</strong><span>COMMERCE</span></a>
+        <button class="category-trigger">☰ <span>Todas as categorias</span></button>
+        <form class="market-search" action="produtos.html"><input name="q" type="search" placeholder="Buscar produtos, categorias, marcas..." /><button>⌕</button></form>
+        <a class="account-link" href="login.html">Ola! Faca seu<br /><strong>login ou cadastre-se</strong></a>
+        <a class="icon-link" href="#">♡ <span>Favoritos</span></a>
+        <a class="icon-link cart-link" href="#">🛒 <span>Carrinho</span><b id="cartCount">2</b></a>
+      </div>
+      <nav class="category-nav container">
+        <a class="active" href="produtos.html">💻 Notebooks</a><a href="produtos.html">📱 Smartphones</a><a href="produtos.html">🧩 Componentes</a><a href="produtos.html">⌨️ Perifericos</a><a href="produtos.html">◎ Software</a><a href="produtos.html">🎮 Games</a><a href="produtos.html">🏠 Smart Home</a><a href="produtos.html">🎧 Audio</a><a href="produtos.html">🖥️ Monitores</a><a href="produtos.html">⭐ Mais vendidos</a><a href="produtos.html">🏷️ Ofertas</a>
+      </nav>
+    </header>
+    <main class="container page-space product-detail" id="productDetail"></main>
+    <section class="container panel">
+      <div class="section-title inline-title"><div><span>Produtos relacionados</span><h2>Quem viu este produto tambem comprou</h2></div><a href="produtos.html">Ver mais</a></div>
+      <div class="product-grid home-grid" id="recommendedProducts"></div>
+    </section>
+    <script src="app.js"></script>
+  </body>
+</html>
