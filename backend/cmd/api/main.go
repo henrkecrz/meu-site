@@ -87,6 +87,14 @@ type CartResponse struct {
 	TotalCents int        `json:"totalCents"`
 }
 
+type OrderResponse struct {
+	OrderID    string     `json:"orderId"`
+	Status     string     `json:"status"`
+	TotalCents int        `json:"totalCents"`
+	Items      []CartItem `json:"items"`
+	CreatedAt  time.Time  `json:"createdAt"`
+}
+
 type Claims struct {
 	Permissions []string `json:"permissions"`
 	Email       string   `json:"email"`
@@ -299,7 +307,39 @@ func (a *App) buildCartResponse(ctx context.Context, cartID string) (CartRespons
 }
 
 func (a *App) createOrder(w http.ResponseWriter, r *http.Request) {
-	writeJSON(w, http.StatusCreated, map[string]any{"ok": true, "message": "order created"})
+	claims := r.Context().Value("claims").(*Claims)
+	ctx := r.Context()
+
+	cartID, err := a.getOrCreateOpenCart(ctx, claims.Subject)
+	if err != nil { writeError(w, err); return }
+	cart, err := a.buildCartResponse(ctx, cartID)
+	if err != nil { writeError(w, err); return }
+	if cart.ItemCount == 0 {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "cart is empty"})
+		return
+	}
+
+	tx, err := a.DB.Begin(ctx)
+	if err != nil { writeError(w, err); return }
+	defer tx.Rollback(ctx)
+
+	var order OrderResponse
+	err = tx.QueryRow(ctx, `INSERT INTO orders (customer_ref, total_cents, status) VALUES ($1, $2, 'pending') RETURNING id, status, total_cents, created_at`, claims.Subject, cart.TotalCents).Scan(&order.OrderID, &order.Status, &order.TotalCents, &order.CreatedAt)
+	if err != nil { writeError(w, err); return }
+
+	_, err = tx.Exec(ctx, `INSERT INTO order_items (order_id, product_id, seller_id, quantity, unit_price_cents)
+		SELECT $1, p.id, p.seller_id, ci.quantity, p.price_cents
+		FROM cart_items ci
+		JOIN products p ON p.id = ci.product_id
+		WHERE ci.cart_id = $2`, order.OrderID, cartID)
+	if err != nil { writeError(w, err); return }
+
+	_, err = tx.Exec(ctx, `UPDATE carts SET status = 'converted', updated_at = now() WHERE id = $1`, cartID)
+	if err != nil { writeError(w, err); return }
+
+	if err := tx.Commit(ctx); err != nil { writeError(w, err); return }
+	order.Items = cart.Items
+	writeJSON(w, http.StatusCreated, order)
 }
 
 func (a *App) authMiddleware(next http.Handler) http.Handler {
