@@ -11,6 +11,7 @@ export type AdminSeller = { id: string; name: string; slug: string; status: stri
 export type AdminUser = { id: string; identitySubject: string; email: string; name: string; pictureUrl: string; role: string }
 
 function authHeaders(accessToken: string) { return { Authorization: `Bearer ${accessToken}` } }
+async function patchJson(accessToken: string, path: string, payload: unknown) { const response = await fetch(`${API_URL}${path}`, { method: 'PATCH', headers: { ...authHeaders(accessToken), 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }); if (!response.ok) throw new Error('Erro ao executar acao admin'); return response.json() }
 
 export async function getCategories(): Promise<Category[]> { const response = await fetch(`${API_URL}/api/categories`); if (!response.ok) throw new Error('Erro ao buscar categorias'); return response.json() }
 export async function getProducts(search = '', category = ''): Promise<Product[]> { const params = new URLSearchParams(); if (search) params.set('q', search); if (category) params.set('category', category); const response = await fetch(`${API_URL}/api/products?${params.toString()}`); if (!response.ok) throw new Error('Erro ao buscar produtos'); return response.json() }
@@ -28,3 +29,7 @@ export async function getAdminUsers(accessToken: string): Promise<AdminUser[]> {
 export async function getAdminSellers(accessToken: string): Promise<AdminSeller[]> { const response = await fetch(`${API_URL}/api/admin/sellers`, { headers: authHeaders(accessToken) }); if (!response.ok) throw new Error('Erro ao buscar sellers admin'); return response.json() }
 export async function getAdminProducts(accessToken: string): Promise<Product[]> { const response = await fetch(`${API_URL}/api/admin/products`, { headers: authHeaders(accessToken) }); if (!response.ok) throw new Error('Erro ao buscar produtos admin'); return response.json() }
 export async function getAdminOrders(accessToken: string): Promise<Order[]> { const response = await fetch(`${API_URL}/api/admin/orders`, { headers: authHeaders(accessToken) }); if (!response.ok) throw new Error('Erro ao buscar pedidos admin'); return response.json() }
+export async function adminSetUserRole(accessToken: string, userId: string, role: 'customer' | 'seller' | 'admin') { return patchJson(accessToken, `/api/admin/users/${userId}/role`, { role }) }
+export async function adminUpdateSellerStatus(accessToken: string, sellerId: string, status: 'active' | 'pending' | 'suspended') { return patchJson(accessToken, `/api/admin/sellers/${sellerId}/status`, { status }) }
+export async function adminUpdateProductStatus(accessToken: string, productId: string, status: 'active' | 'paused' | 'out_of_stock' | 'archived') { return patchJson(accessToken, `/api/admin/products/${productId}/status`, { status }) }
+export async function adminUpdateOrderStatus(accessToken: string, orderId: string, status: 'pending' | 'paid' | 'shipped' | 'delivered' | 'cancelled') { return patchJson(accessToken, `/api/admin/orders/${orderId}/status`, { status }) }
