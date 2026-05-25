@@ -6,6 +6,10 @@ import { getCategories, getProducts, getMe, syncProfile, getCart, addCartItem, c
 
 type Page = 'home' | 'products' | 'orders' | 'seller' | 'admin' | 'account'
 type LocalCartItem = Product & { quantity: number }
+type DemoUser = { name: string; email: string; role: 'customer' | 'seller' | 'admin' }
+
+const DEMO_EMAIL = 'demo@nexuscommerce.com'
+const DEMO_PASSWORD = 'demo123'
 
 const fallbackProducts: Product[] = [
   { id: '1', name: 'Notebook Gamer Pro 16', slug: 'notebook-gamer-pro-16', description: 'GPU dedicada, 16GB RAM, SSD NVMe e tela de alta taxa.', imageEmoji: '💻', priceCents: 699900, oldPriceCents: 849900, stock: 18, rating: 4.8, reviewCount: 256, sellerName: 'Nexus Oficial', categorySlug: 'notebooks' },
@@ -24,10 +28,12 @@ const fallbackCategories: Category[] = [
   { id: 'games', name: 'Games', slug: 'games', icon: '🎮' },
 ]
 
-function Header({ page, setPage, cartCount, openCart, onSearch }: { page: Page; setPage: (page: Page) => void; cartCount: number; openCart: () => void; onSearch: (term: string) => void }) {
+function Header({ page, setPage, cartCount, openCart, onSearch, demoUser, demoLogout }: { page: Page; setPage: (page: Page) => void; cartCount: number; openCart: () => void; onSearch: (term: string) => void; demoUser?: DemoUser; demoLogout: () => void }) {
   const [mobileOpen, setMobileOpen] = useState(false)
   const [term, setTerm] = useState('')
-  const { isAuthenticated, user, loginWithRedirect, logout } = useAuth0()
+  const { isAuthenticated, user, logout } = useAuth0()
+  const logged = isAuthenticated || !!demoUser
+  const accountName = demoUser?.name?.split(' ')[0] || user?.name?.split(' ')[0] || 'Conta'
   const nav: { label: string; page: Page }[] = [
     { label: 'Home', page: 'home' },
     { label: 'Produtos', page: 'products' },
@@ -48,9 +54,15 @@ function Header({ page, setPage, cartCount, openCart, onSearch }: { page: Page; 
     setMobileOpen(false)
   }
 
+  function signOut() {
+    if (demoUser) demoLogout()
+    else logout({ logoutParams: { returnTo: window.location.origin } })
+    setMobileOpen(false)
+  }
+
   return (
     <header className="site-header">
-      <div className="topbar"><span>Frete gratis em tecnologia selecionada</span><span>Compra protegida • Marketplace nacional</span></div>
+      <div className="topbar"><span>Frete gratis em tecnologia selecionada</span><span>Login demo disponivel • Compra protegida</span></div>
       <div className="header-main container">
         <button className="menu-button" onClick={() => setMobileOpen(true)} aria-label="Abrir menu"><Menu size={22} /></button>
         <button className="brand" onClick={() => go('home')}><strong>Nexus</strong><span>Commerce</span></button>
@@ -59,10 +71,10 @@ function Header({ page, setPage, cartCount, openCart, onSearch }: { page: Page; 
           <button aria-label="Buscar"><Search size={18} /></button>
         </form>
         <nav className="desktop-nav">{nav.map(item => <button key={item.page} className={page === item.page ? 'active' : ''} onClick={() => go(item.page)}>{item.label}</button>)}</nav>
-        {isAuthenticated ? <button className="account-pill" onClick={() => go('account')}><UserRound size={18} />{user?.name?.split(' ')[0] || 'Conta'}</button> : <button className="account-pill" onClick={() => loginWithRedirect()}><UserRound size={18} />Entrar</button>}
+        <button className="account-pill" onClick={() => go('account')}><UserRound size={18} />{logged ? accountName : 'Entrar'}</button>
         <button className="cart-button" onClick={openCart}><ShoppingCart size={20} /><b>{cartCount}</b></button>
       </div>
-      {mobileOpen ? <div className="mobile-panel"><div className="mobile-panel-head"><strong>Menu</strong><button onClick={() => setMobileOpen(false)}><X /></button></div>{nav.map(item => <button key={item.page} className={page === item.page ? 'active' : ''} onClick={() => go(item.page)}>{item.label}</button>)}{isAuthenticated ? <button onClick={() => logout({ logoutParams: { returnTo: window.location.origin } })}><LogOut size={18} /> Sair</button> : <button onClick={() => loginWithRedirect()}><UserRound size={18} /> Entrar</button>}</div> : null}
+      {mobileOpen ? <div className="mobile-panel"><div className="mobile-panel-head"><strong>Menu</strong><button onClick={() => setMobileOpen(false)}><X /></button></div>{nav.map(item => <button key={item.page} className={page === item.page ? 'active' : ''} onClick={() => go(item.page)}>{item.label}</button>)}<button onClick={() => go('account')}><UserRound size={18} /> {logged ? accountName : 'Entrar'}</button>{logged ? <button onClick={signOut}><LogOut size={18} /> Sair</button> : null}</div> : null}
     </header>
   )
 }
@@ -87,10 +99,10 @@ function HomePage({ categories, products, setPage, onAdd }: { categories: Catego
   return (
     <>
       <section className="hero container">
-        <div className="hero-copy"><span className="eyebrow">Marketplace de tecnologia</span><h1>Compre tecnologia com cara de loja grande.</h1><p>Menu claro, paginas separadas, carrinho funcional e experiencia otimizada para celular.</p><div className="hero-actions"><button className="primary" onClick={() => setPage('products')}>Ver produtos</button><button className="secondary" onClick={() => setPage('seller')}>Area do vendedor</button></div></div>
+        <div className="hero-copy"><span className="eyebrow">Marketplace de tecnologia</span><h1>Compre tecnologia com cara de loja grande.</h1><p>Menu claro, paginas separadas, carrinho funcional e login demo para testar agora.</p><div className="hero-actions"><button className="primary" onClick={() => setPage('products')}>Ver produtos</button><button className="secondary" onClick={() => setPage('account')}>Entrar com demo</button></div></div>
         <div className="hero-card"><span>💻</span><strong>Setup Pro</strong><small>Ofertas em notebooks, games, SSDs e perifericos</small></div>
       </section>
-      <section className="benefits container"><div><Truck /><strong>Entrega rapida</strong><small>Produtos selecionados</small></div><div><ShieldCheck /><strong>Compra protegida</strong><small>Ambiente seguro</small></div><div><Zap /><strong>Ofertas reais</strong><small>Vitrines por categoria</small></div></section>
+      <section className="benefits container"><div><Truck /><strong>Entrega rapida</strong><small>Produtos selecionados</small></div><div><ShieldCheck /><strong>Login demo</strong><small>Teste sem Auth0</small></div><div><Zap /><strong>Carrinho funcional</strong><small>Sem depender de login</small></div></section>
       <section className="section container"><div className="section-head"><h2>Categorias</h2><button onClick={() => setPage('products')}>Ver tudo</button></div><div className="category-grid">{categories.map(c => <button key={c.slug} onClick={() => setPage('products')}><span>{c.icon}</span><strong>{c.name}</strong></button>)}</div></section>
       <section className="section container"><div className="section-head"><h2>Mais vendidos</h2><button onClick={() => setPage('products')}>Ir para produtos</button></div><div className="product-strip">{products.slice(0, 4).map(product => <ProductCard key={product.id} product={product} onAdd={onAdd} />)}</div></section>
     </>
@@ -125,9 +137,27 @@ function AdminPage({ dashboard, users, sellers, status }: { dashboard?: AdminDas
   return <section className="panel-page container"><span className="eyebrow"><LayoutDashboard size={14} /> Admin</span><h1>Painel administrativo</h1><p>{status}</p><div className="kpis"><div><small>Usuarios</small><strong>{dashboard?.usersCount ?? users.length}</strong></div><div><small>Vendedores</small><strong>{dashboard?.sellersCount ?? sellers.length}</strong></div><div><small>Produtos</small><strong>{dashboard?.productsCount ?? 0}</strong></div><div><small>GMV</small><strong>{cents(dashboard?.revenueCents ?? 0)}</strong></div></div><div className="two-cols"><div><h3>Usuarios</h3>{users.slice(0, 6).map(u => <div className="mini-row" key={u.id}><strong>{u.name || u.email}</strong><small>{u.role}</small></div>)}</div><div><h3>Vendedores</h3>{sellers.slice(0, 6).map(s => <div className="mini-row" key={s.id}><strong>{s.name}</strong><small>{s.status}</small></div>)}</div></div></section>
 }
 
-function AccountPage({ authStatus }: { authStatus: string }) {
+function AccountPage({ authStatus, demoUser, demoLogin, demoLogout }: { authStatus: string; demoUser?: DemoUser; demoLogin: (email: string, password: string) => boolean; demoLogout: () => void }) {
   const { isAuthenticated, user, loginWithRedirect, logout } = useAuth0()
-  return <section className="panel-page container"><span className="eyebrow">Conta</span><h1>{isAuthenticated ? 'Minha conta' : 'Entrar'}</h1><p>{authStatus}</p>{isAuthenticated ? <div className="account-card">{user?.picture ? <img src={user.picture} alt={user.name || 'Usuario'} /> : <UserRound size={46} />}<div><strong>{user?.name || 'Usuario'}</strong><small>{user?.email}</small></div><button className="secondary" onClick={() => logout({ logoutParams: { returnTo: window.location.origin } })}>Sair</button></div> : <div className="login-grid"><button className="primary" onClick={() => loginWithRedirect()}>Entrar com Auth0</button><button className="secondary" onClick={() => loginWithRedirect({ authorizationParams: { connection: 'google-oauth2' } })}>Google</button><button className="secondary" onClick={() => loginWithRedirect({ authorizationParams: { connection: 'apple' } })}>Apple</button><button className="secondary" onClick={() => loginWithRedirect({ authorizationParams: { connection: 'windowslive' } })}>Microsoft</button></div>}</section>
+  const [email, setEmail] = useState(DEMO_EMAIL)
+  const [password, setPassword] = useState(DEMO_PASSWORD)
+  const [message, setMessage] = useState('Use o login demo abaixo para entrar agora.')
+  const logged = isAuthenticated || !!demoUser
+  const displayName = demoUser?.name || user?.name || 'Usuario Nexus'
+  const displayEmail = demoUser?.email || user?.email || ''
+
+  function submit(event: FormEvent) {
+    event.preventDefault()
+    const ok = demoLogin(email, password)
+    setMessage(ok ? 'Login demo realizado com sucesso.' : 'Email ou senha incorretos.')
+  }
+
+  function signOut() {
+    if (demoUser) demoLogout()
+    else logout({ logoutParams: { returnTo: window.location.origin } })
+  }
+
+  return <section className="panel-page container"><span className="eyebrow">Conta</span><h1>{logged ? 'Minha conta' : 'Entrar'}</h1><p>{logged ? authStatus : message}</p>{logged ? <div className="account-card">{user?.picture && !demoUser ? <img src={user.picture} alt={displayName} /> : <UserRound size={46} />}<div><strong>{displayName}</strong><small>{displayEmail}</small><small>{demoUser ? 'Sessao demo local' : 'Sessao Auth0'}</small></div><button className="secondary" onClick={signOut}>Sair</button></div> : <div className="login-area"><form className="demo-form" onSubmit={submit}><h2>Login demo</h2><label>Email<input value={email} onChange={e => setEmail(e.target.value)} /></label><label>Senha<input type="password" value={password} onChange={e => setPassword(e.target.value)} /></label><button className="primary full">Entrar no demo</button><div className="demo-credentials"><strong>Credenciais:</strong><span>{DEMO_EMAIL}</span><span>{DEMO_PASSWORD}</span></div></form><div className="auth0-box"><h2>Login real</h2><p>Use Auth0 quando as variaveis e provedores estiverem configurados.</p><button className="secondary full" onClick={() => loginWithRedirect()}>Entrar com Auth0</button><button className="secondary full" onClick={() => loginWithRedirect({ authorizationParams: { connection: 'google-oauth2' } })}>Google</button><button className="secondary full" onClick={() => loginWithRedirect({ authorizationParams: { connection: 'apple' } })}>Apple</button><button className="secondary full" onClick={() => loginWithRedirect({ authorizationParams: { connection: 'windowslive' } })}>Microsoft</button></div></div>}</section>
 }
 
 export function App() {
@@ -151,13 +181,31 @@ export function App() {
   const [adminUsers, setAdminUsers] = useState<AdminUser[]>([])
   const [adminSellers, setAdminSellers] = useState<AdminSeller[]>([])
   const [checkingOut, setCheckingOut] = useState(false)
+  const [demoUser, setDemoUser] = useState<DemoUser | undefined>(() => localStorage.getItem('nexus-demo-login') === 'true' ? { name: 'Cliente Demo', email: DEMO_EMAIL, role: 'customer' } : undefined)
   const { isAuthenticated, user, getAccessTokenSilently } = useAuth0()
 
   useEffect(() => { getCategories().then(c => c.length && setCategories(c)).catch(() => null); getProducts().then(p => p.length && setProducts(p)).catch(() => null) }, [])
   useEffect(() => { if (!isAuthenticated || !user) return; (async () => { try { const token = await getAccessTokenSilently(); await syncProfile(token, { email: user.email, name: user.name, pictureUrl: user.picture }); const me = await getMe(token); setAuthStatus(`Perfil sincronizado como ${me.profile?.role || 'customer'}.`); const [apiCart, userOrders] = await Promise.all([getCart(token), getOrders(token)]); setLocalCart(apiCart.items.map(item => ({ id: item.productId, name: item.name, slug: item.slug, description: '', imageEmoji: item.imageEmoji, priceCents: item.priceCents, oldPriceCents: null, stock: 1, rating: item.rating, reviewCount: item.reviewCount, sellerName: item.sellerName, categorySlug: '', quantity: item.quantity }))); setOrders(userOrders); setOrdersStatus(userOrders.length ? 'Pedidos carregados da API.' : 'Nenhum pedido encontrado.'); try { const [sd, sp, so] = await Promise.all([getSellerDashboard(token), getSellerProducts(token), getSellerOrders(token)]); setSellerDashboard(sd); setSellerProducts(sp); setSellerOrders(so); setSellerStatus('Dados reais do vendedor carregados.') } catch { setSellerStatus('Perfil sem permissao de vendedor. Exibindo demonstracao.') } try { const [ad, au, as] = await Promise.all([getAdminDashboard(token), getAdminUsers(token), getAdminSellers(token)]); await Promise.all([getAdminProducts(token), getAdminOrders(token)]); setAdminDashboard(ad); setAdminUsers(au); setAdminSellers(as); setAdminStatus('Dados reais do admin carregados.') } catch { setAdminStatus('Perfil sem permissao admin.') } } catch { setAuthStatus('API protegida indisponivel ou Auth0 sem audience correta.') } })() }, [getAccessTokenSilently, isAuthenticated, user])
+  useEffect(() => { if (demoUser) { setAuthStatus('Logado como Cliente Demo. Carrinho e pedidos funcionam em modo demonstracao.'); setOrdersStatus('Pedidos demo locais. Finalize uma compra para aparecer aqui.') } }, [demoUser])
 
   const cartCount = localCart.reduce((sum, item) => sum + item.quantity, 0)
   const featured = useMemo(() => products.slice(0, 6), [products])
+
+  function demoLogin(email: string, password: string) {
+    if (email.trim().toLowerCase() !== DEMO_EMAIL || password !== DEMO_PASSWORD) return false
+    const next = { name: 'Cliente Demo', email: DEMO_EMAIL, role: 'customer' as const }
+    setDemoUser(next)
+    localStorage.setItem('nexus-demo-login', 'true')
+    setAuthStatus('Logado como Cliente Demo. Carrinho, menu e pedidos liberados para teste.')
+    setPage('home')
+    return true
+  }
+
+  function demoLogout() {
+    setDemoUser(undefined)
+    localStorage.removeItem('nexus-demo-login')
+    setAuthStatus('Sessao demo encerrada.')
+  }
 
   function addToCart(product: Product) {
     setLocalCart(current => current.some(item => item.id === product.id) ? current.map(item => item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item) : [...current, { ...product, quantity: 1 }])
@@ -169,7 +217,7 @@ export function App() {
   function increase(id: string) { setLocalCart(items => items.map(item => item.id === id ? { ...item, quantity: item.quantity + 1 } : item)) }
   function decrease(id: string) { setLocalCart(items => items.flatMap(item => item.id === id ? (item.quantity > 1 ? [{ ...item, quantity: item.quantity - 1 }] : []) : [item])) }
   function remove(id: string) { setLocalCart(items => items.filter(item => item.id !== id)) }
-  async function checkout() { setCheckingOut(true); try { if (isAuthenticated) { const token = await getAccessTokenSilently(); await createOrder(token); setOrders(await getOrders(token)); setOrdersStatus('Pedido criado com sucesso.'); } setLocalCart([]); setCartStatus('Compra finalizada.'); setPage('orders'); setCartOpen(false) } catch { setCartStatus('Nao foi possivel finalizar na API. Carrinho mantido localmente.') } finally { setCheckingOut(false) } }
+  async function checkout() { setCheckingOut(true); try { const total = localCart.reduce((sum, item) => sum + item.priceCents * item.quantity, 0); if (isAuthenticated) { const token = await getAccessTokenSilently(); await createOrder(token); setOrders(await getOrders(token)); setOrdersStatus('Pedido criado com sucesso.'); } else if (demoUser) { const demoOrder: Order = { orderId: `demo-${Date.now()}`, status: 'paid', totalCents: total, createdAt: new Date().toISOString(), items: localCart.map(item => ({ productId: item.id, name: item.name, slug: item.slug, imageEmoji: item.imageEmoji, priceCents: item.priceCents, quantity: item.quantity, lineTotal: item.priceCents * item.quantity, sellerName: item.sellerName, rating: item.rating, reviewCount: item.reviewCount })) }; setOrders(current => [demoOrder, ...current]); setOrdersStatus('Pedido demo criado com sucesso.'); } else { setOrdersStatus('Entre com o demo para salvar um pedido local.'); } setLocalCart([]); setCartStatus('Compra finalizada.'); setPage('orders'); setCartOpen(false) } catch { setCartStatus('Nao foi possivel finalizar na API. Carrinho mantido localmente.') } finally { setCheckingOut(false) } }
 
-  return <><Header page={page} setPage={setPage} cartCount={cartCount} openCart={() => setCartOpen(true)} onSearch={setSearch} /><main>{page === 'home' && <HomePage categories={categories} products={featured} setPage={setPage} onAdd={addToCart} />}{page === 'products' && <ProductsPage products={products} categories={categories} selectedCategory={selectedCategory} setSelectedCategory={setSelectedCategory} onAdd={addToCart} search={search} />}{page === 'orders' && <OrdersPage orders={orders} status={ordersStatus} />}{page === 'seller' && <SellerPage dashboard={sellerDashboard} products={sellerProducts} orders={sellerOrders} status={sellerStatus} />}{page === 'admin' && <AdminPage dashboard={adminDashboard} users={adminUsers} sellers={adminSellers} status={adminStatus} />}{page === 'account' && <AccountPage authStatus={authStatus} />}</main><CartDrawer open={cartOpen} close={() => setCartOpen(false)} items={localCart} increase={increase} decrease={decrease} remove={remove} checkout={checkout} checkingOut={checkingOut} status={cartStatus} /></>
+  return <><Header page={page} setPage={setPage} cartCount={cartCount} openCart={() => setCartOpen(true)} onSearch={setSearch} demoUser={demoUser} demoLogout={demoLogout} /><main>{page === 'home' && <HomePage categories={categories} products={featured} setPage={setPage} onAdd={addToCart} />}{page === 'products' && <ProductsPage products={products} categories={categories} selectedCategory={selectedCategory} setSelectedCategory={setSelectedCategory} onAdd={addToCart} search={search} />}{page === 'orders' && <OrdersPage orders={orders} status={ordersStatus} />}{page === 'seller' && <SellerPage dashboard={sellerDashboard} products={sellerProducts} orders={sellerOrders} status={sellerStatus} />}{page === 'admin' && <AdminPage dashboard={adminDashboard} users={adminUsers} sellers={adminSellers} status={adminStatus} />}{page === 'account' && <AccountPage authStatus={authStatus} demoUser={demoUser} demoLogin={demoLogin} demoLogout={demoLogout} />}</main><CartDrawer open={cartOpen} close={() => setCartOpen(false)} items={localCart} increase={increase} decrease={decrease} remove={remove} checkout={checkout} checkingOut={checkingOut} status={cartStatus} /></>
 }
