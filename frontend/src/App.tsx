@@ -5,21 +5,10 @@ import { cents, Product } from './types'
 import type { Order } from './api'
 import { DEMO_EMAIL, DEMO_PASSWORD, demoCredentials } from './config/demo'
 import { categories, productsSeed } from './data/catalog'
+import { LocalCartItem, useCart } from './hooks/useCart'
+import { useTheme } from './hooks/useTheme'
 
-type LocalCartItem = Product & { quantity: number }
 type DemoUser = typeof demoCredentials
-
-function useTheme() {
-  const [theme, setTheme] = useState(() => localStorage.getItem('nexus-theme') || 'dark')
-  function toggleTheme() {
-    const next = theme === 'dark' ? 'light' : 'dark'
-    setTheme(next)
-    localStorage.setItem('nexus-theme', next)
-    document.documentElement.dataset.theme = next
-  }
-  useState(() => { document.documentElement.dataset.theme = theme })
-  return { theme, toggleTheme }
-}
 
 function Layout({ cartCount, openCart, demoUser, logoutDemo, theme, toggleTheme }: { cartCount: number; openCart: () => void; demoUser?: DemoUser; logoutDemo: () => void; theme: string; toggleTheme: () => void }) {
   const [open, setOpen] = useState(false)
@@ -107,20 +96,13 @@ function CartDrawer({ open, close, items, inc, dec, remove, confirm }: { open: b
 }
 
 export function App() {
-  const [cartOpen, setCartOpen] = useState(false)
-  const [cart, setCart] = useState<LocalCartItem[]>([])
-  const [orders, setOrders] = useState<Order[]>([])
   const [demoUser, setDemoUser] = useState<DemoUser | undefined>(() => localStorage.getItem('nexus-demo-login') === 'true' ? demoCredentials : undefined)
   const { theme, toggleTheme } = useTheme()
   const navigate = useNavigate()
-  const count = cart.reduce((s, i) => s + i.quantity, 0)
-  const add = (p: Product) => { setCart(items => items.some(i => i.id === p.id) ? items.map(i => i.id === p.id ? { ...i, quantity: i.quantity + 1 } : i) : [...items, { ...p, quantity: 1 }]); setCartOpen(true) }
-  const inc = (id: string) => setCart(items => items.map(i => i.id === id ? { ...i, quantity: i.quantity + 1 } : i))
-  const dec = (id: string) => setCart(items => items.flatMap(i => i.id === id ? (i.quantity > 1 ? [{ ...i, quantity: i.quantity - 1 }] : []) : [i]))
-  const remove = (id: string) => setCart(items => items.filter(i => i.id !== id))
-  const confirm = () => { const total = cart.reduce((s, i) => s + i.priceCents * i.quantity, 0); if (cart.length) { setOrders(o => [{ orderId: `demo-${Date.now()}`, status: 'paid', totalCents: total, createdAt: new Date().toISOString(), items: cart.map(i => ({ productId: i.id, name: i.name, slug: i.slug, imageEmoji: i.imageEmoji, priceCents: i.priceCents, quantity: i.quantity, lineTotal: i.priceCents * i.quantity, sellerName: i.sellerName, rating: i.rating, reviewCount: i.reviewCount })) }, ...o]); setCart([]); setCartOpen(false); navigate('/pedidos') } }
+  const cart = useCart()
+  const confirm = () => { const order = cart.confirmOrder(); if (order) navigate('/pedidos') }
   const login = (email: string, password: string) => { if (email.trim().toLowerCase() !== DEMO_EMAIL || password !== DEMO_PASSWORD) return false; setDemoUser(demoCredentials); localStorage.setItem('nexus-demo-login','true'); return true }
   const logout = () => { setDemoUser(undefined); localStorage.removeItem('nexus-demo-login') }
-  const routes = useMemo(() => <Routes><Route path="/" element={<Home add={add} />} /><Route path="/produtos" element={<Catalog add={add} />} /><Route path="/produto/:slug" element={<ProductDetail add={add} />} /><Route path="/carrinho" element={<CartPage items={cart} inc={inc} dec={dec} remove={remove} />} /><Route path="/checkout" element={<Checkout items={cart} confirm={confirm} demoUser={demoUser} />} /><Route path="/pedidos" element={<Orders orders={orders} />} /><Route path="/conta" element={<Account demoUser={demoUser} login={login} logout={logout} />} /><Route path="/suporte" element={<Support />} /><Route path="/vendedor" element={<Seller />} /><Route path="/vendedor/produtos" element={<SellerProducts />} /><Route path="/vendedor/pedidos" element={<SellerOrders />} /><Route path="/admin" element={<Admin />} /><Route path="/admin/usuarios" element={<AdminUsers />} /><Route path="/admin/sellers" element={<AdminSellers />} /><Route path="/admin/produtos" element={<AdminProducts />} /><Route path="/admin/pedidos" element={<AdminOrders />} /><Route path="*" element={<section className="panel-page container"><h1>Pagina nao encontrada</h1><Link className="primary" to="/">Voltar para Home</Link></section>} /></Routes>, [cart, orders, demoUser])
-  return <><Layout cartCount={count} openCart={() => setCartOpen(true)} demoUser={demoUser} logoutDemo={logout} theme={theme} toggleTheme={toggleTheme} /><main>{routes}</main><CartDrawer open={cartOpen} close={() => setCartOpen(false)} items={cart} inc={inc} dec={dec} remove={remove} confirm={confirm} /></>
+  const routes = useMemo(() => <Routes><Route path="/" element={<Home add={cart.addToCart} />} /><Route path="/produtos" element={<Catalog add={cart.addToCart} />} /><Route path="/produto/:slug" element={<ProductDetail add={cart.addToCart} />} /><Route path="/carrinho" element={<CartPage items={cart.cart} inc={cart.increaseQuantity} dec={cart.decreaseQuantity} remove={cart.removeFromCart} />} /><Route path="/checkout" element={<Checkout items={cart.cart} confirm={confirm} demoUser={demoUser} />} /><Route path="/pedidos" element={<Orders orders={cart.orders} />} /><Route path="/conta" element={<Account demoUser={demoUser} login={login} logout={logout} />} /><Route path="/suporte" element={<Support />} /><Route path="/vendedor" element={<Seller />} /><Route path="/vendedor/produtos" element={<SellerProducts />} /><Route path="/vendedor/pedidos" element={<SellerOrders />} /><Route path="/admin" element={<Admin />} /><Route path="/admin/usuarios" element={<AdminUsers />} /><Route path="/admin/sellers" element={<AdminSellers />} /><Route path="/admin/produtos" element={<AdminProducts />} /><Route path="/admin/pedidos" element={<AdminOrders />} /><Route path="*" element={<section className="panel-page container"><h1>Pagina nao encontrada</h1><Link className="primary" to="/">Voltar para Home</Link></section>} /></Routes>, [cart, demoUser])
+  return <><Layout cartCount={cart.cartCount} openCart={() => cart.setCartOpen(true)} demoUser={demoUser} logoutDemo={logout} theme={theme} toggleTheme={toggleTheme} /><main>{routes}</main><CartDrawer open={cart.cartOpen} close={() => cart.setCartOpen(false)} items={cart.cart} inc={cart.increaseQuantity} dec={cart.decreaseQuantity} remove={cart.removeFromCart} confirm={confirm} /></>
 }
