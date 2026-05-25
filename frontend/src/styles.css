@@ -119,7 +119,17 @@ button:disabled { cursor: not-allowed; opacity: .6; }
 .account-card { display: flex; align-items: center; gap: 14px; background: white; border: 1px solid var(--line); border-radius: var(--radius); padding: 18px; margin-top: 18px; flex-wrap: wrap; }
 .account-card img { width: 56px; height: 56px; border-radius: 50%; }
 .account-card strong, .account-card small { display: block; }
-.login-grid { display: grid; gap: 10px; max-width: 420px; margin-top: 18px; }
+.login-area { display: grid; gap: 16px; max-width: 920px; margin-top: 18px; }
+.demo-form, .auth0-box { background: white; border: 1px solid var(--line); border-radius: var(--radius); padding: 20px; box-shadow: 0 14px 34px rgba(15,23,42,.06); }
+.demo-form { display: grid; gap: 12px; }
+.demo-form h2, .auth0-box h2 { margin: 0; }
+.demo-form label { display: grid; gap: 6px; font-weight: 800; color: var(--text); }
+.demo-form input { width: 100%; min-height: 46px; border: 1px solid var(--line); border-radius: 12px; padding: 0 12px; outline: 0; background: var(--surface-2); }
+.demo-form input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(36,87,255,.12); }
+.demo-credentials { display: grid; gap: 4px; padding: 12px; border-radius: 14px; background: #f8fafc; color: var(--muted); font-size: .92rem; }
+.demo-credentials strong { color: var(--text); }
+.auth0-box { display: grid; gap: 10px; align-content: start; }
+.auth0-box p { margin: 0; }
 @media (min-width: 720px) {
   .topbar { display: flex; }
   .header-main { grid-template-columns: auto minmax(260px, 1fr) auto auto; }
@@ -132,7 +142,7 @@ button:disabled { cursor: not-allowed; opacity: .6; }
   .hero { grid-template-columns: 1.5fr .8fr; align-items: stretch; padding-top: 34px; }
   .catalog { grid-template-columns: 240px 1fr; }
   .kpis { grid-template-columns: repeat(4, 1fr); }
-  .two-cols { grid-template-columns: 1fr 1fr; }
+  .two-cols, .login-area { grid-template-columns: 1fr 1fr; }
 }
 @media (min-width: 1080px) {
   .desktop-nav { display: flex; align-items: center; gap: 4px; }
