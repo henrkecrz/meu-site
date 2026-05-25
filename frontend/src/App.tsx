@@ -1,31 +1,13 @@
 import { FormEvent, ReactNode, useMemo, useState } from 'react'
 import { Link, NavLink, Route, Routes, useNavigate, useParams } from 'react-router-dom'
 import { Menu, Search, ShoppingCart, UserRound, LogOut, Star, Truck, ShieldCheck, Zap, X, Minus, Plus, PackageCheck, Store, LayoutDashboard, Headphones, CreditCard, Users, Boxes, ClipboardList, Sun, Moon } from 'lucide-react'
-import { cents, Product, Category } from './types'
+import { cents, Product } from './types'
 import type { Order } from './api'
+import { DEMO_EMAIL, DEMO_PASSWORD, demoCredentials } from './config/demo'
+import { categories, productsSeed } from './data/catalog'
 
 type LocalCartItem = Product & { quantity: number }
-type DemoUser = { name: string; email: string; role: 'customer' | 'seller' | 'admin' }
-
-const DEMO_EMAIL = 'demo@nexuscommerce.com'
-const DEMO_PASSWORD = 'demo123'
-
-const productsSeed: Product[] = [
-  { id: '1', name: 'Notebook Gamer Pro 16', slug: 'notebook-gamer-pro-16', description: 'GPU dedicada, 16GB RAM, SSD NVMe e tela rapida para games, edicao e produtividade.', imageEmoji: '💻', priceCents: 699900, oldPriceCents: 849900, stock: 18, rating: 4.8, reviewCount: 256, sellerName: 'Nexus Oficial', categorySlug: 'notebooks' },
-  { id: '2', name: 'Smartphone Ultra 5G 256GB', slug: 'smartphone-ultra-5g', description: 'Tela OLED, camera avancada, bateria para o dia todo e carregamento rapido.', imageEmoji: '📱', priceCents: 429900, oldPriceCents: 499900, stock: 42, rating: 4.7, reviewCount: 412, sellerName: 'Mobile Prime', categorySlug: 'smartphones' },
-  { id: '3', name: 'SSD Kingston NV2 1TB NVMe M.2', slug: 'ssd-kingston-nv2-1tb', description: 'Upgrade de performance para notebooks, PCs e workstations com leitura ultrarrapida.', imageEmoji: '💾', priceCents: 28990, oldPriceCents: 38990, stock: 120, rating: 4.7, reviewCount: 842, sellerName: 'Nexus Oficial', categorySlug: 'componentes' },
-  { id: '4', name: 'Mouse Gamer Logitech G502 HERO', slug: 'mouse-logitech-g502-hero', description: 'Sensor 25K, RGB, pesos ajustaveis e botoes programaveis para alta precisao.', imageEmoji: '🖱️', priceCents: 33990, oldPriceCents: 39990, stock: 80, rating: 4.6, reviewCount: 621, sellerName: 'Logitech Store', categorySlug: 'perifericos' },
-  { id: '5', name: 'Xbox Series S 512GB SSD', slug: 'console-xbox-series-s-512gb', description: 'Console compacto de nova geracao com SSD, Quick Resume e Game Pass.', imageEmoji: '🎮', priceCents: 219900, oldPriceCents: null, stock: 33, rating: 4.8, reviewCount: 1102, sellerName: 'Microsoft Store', categorySlug: 'games' },
-  { id: '6', name: 'Monitor Gamer 27 QHD 165Hz', slug: 'monitor-gamer-27-qhd', description: 'Painel QHD, baixa latencia, 165Hz e base ajustavel para setup premium.', imageEmoji: '🖥️', priceCents: 189900, oldPriceCents: 239900, stock: 21, rating: 4.9, reviewCount: 178, sellerName: 'Display Tech', categorySlug: 'perifericos' },
-]
-
-const categories: Category[] = [
-  { id: 'notebooks', name: 'Notebooks', slug: 'notebooks', icon: '💻' },
-  { id: 'smartphones', name: 'Smartphones', slug: 'smartphones', icon: '📱' },
-  { id: 'componentes', name: 'Componentes', slug: 'componentes', icon: '🧩' },
-  { id: 'perifericos', name: 'Perifericos', slug: 'perifericos', icon: '⌨️' },
-  { id: 'games', name: 'Games', slug: 'games', icon: '🎮' },
-]
+type DemoUser = typeof demoCredentials
 
 function useTheme() {
   const [theme, setTheme] = useState(() => localStorage.getItem('nexus-theme') || 'dark')
@@ -128,7 +110,7 @@ export function App() {
   const [cartOpen, setCartOpen] = useState(false)
   const [cart, setCart] = useState<LocalCartItem[]>([])
   const [orders, setOrders] = useState<Order[]>([])
-  const [demoUser, setDemoUser] = useState<DemoUser | undefined>(() => localStorage.getItem('nexus-demo-login') === 'true' ? { name: 'Cliente Demo', email: DEMO_EMAIL, role: 'customer' } : undefined)
+  const [demoUser, setDemoUser] = useState<DemoUser | undefined>(() => localStorage.getItem('nexus-demo-login') === 'true' ? demoCredentials : undefined)
   const { theme, toggleTheme } = useTheme()
   const navigate = useNavigate()
   const count = cart.reduce((s, i) => s + i.quantity, 0)
@@ -137,7 +119,7 @@ export function App() {
   const dec = (id: string) => setCart(items => items.flatMap(i => i.id === id ? (i.quantity > 1 ? [{ ...i, quantity: i.quantity - 1 }] : []) : [i]))
   const remove = (id: string) => setCart(items => items.filter(i => i.id !== id))
   const confirm = () => { const total = cart.reduce((s, i) => s + i.priceCents * i.quantity, 0); if (cart.length) { setOrders(o => [{ orderId: `demo-${Date.now()}`, status: 'paid', totalCents: total, createdAt: new Date().toISOString(), items: cart.map(i => ({ productId: i.id, name: i.name, slug: i.slug, imageEmoji: i.imageEmoji, priceCents: i.priceCents, quantity: i.quantity, lineTotal: i.priceCents * i.quantity, sellerName: i.sellerName, rating: i.rating, reviewCount: i.reviewCount })) }, ...o]); setCart([]); setCartOpen(false); navigate('/pedidos') } }
-  const login = (email: string, password: string) => { if (email.trim().toLowerCase() !== DEMO_EMAIL || password !== DEMO_PASSWORD) return false; const user = { name: 'Cliente Demo', email: DEMO_EMAIL, role: 'customer' as const }; setDemoUser(user); localStorage.setItem('nexus-demo-login','true'); return true }
+  const login = (email: string, password: string) => { if (email.trim().toLowerCase() !== DEMO_EMAIL || password !== DEMO_PASSWORD) return false; setDemoUser(demoCredentials); localStorage.setItem('nexus-demo-login','true'); return true }
   const logout = () => { setDemoUser(undefined); localStorage.removeItem('nexus-demo-login') }
   const routes = useMemo(() => <Routes><Route path="/" element={<Home add={add} />} /><Route path="/produtos" element={<Catalog add={add} />} /><Route path="/produto/:slug" element={<ProductDetail add={add} />} /><Route path="/carrinho" element={<CartPage items={cart} inc={inc} dec={dec} remove={remove} />} /><Route path="/checkout" element={<Checkout items={cart} confirm={confirm} demoUser={demoUser} />} /><Route path="/pedidos" element={<Orders orders={orders} />} /><Route path="/conta" element={<Account demoUser={demoUser} login={login} logout={logout} />} /><Route path="/suporte" element={<Support />} /><Route path="/vendedor" element={<Seller />} /><Route path="/vendedor/produtos" element={<SellerProducts />} /><Route path="/vendedor/pedidos" element={<SellerOrders />} /><Route path="/admin" element={<Admin />} /><Route path="/admin/usuarios" element={<AdminUsers />} /><Route path="/admin/sellers" element={<AdminSellers />} /><Route path="/admin/produtos" element={<AdminProducts />} /><Route path="/admin/pedidos" element={<AdminOrders />} /><Route path="*" element={<section className="panel-page container"><h1>Pagina nao encontrada</h1><Link className="primary" to="/">Voltar para Home</Link></section>} /></Routes>, [cart, orders, demoUser])
   return <><Layout cartCount={count} openCart={() => setCartOpen(true)} demoUser={demoUser} logoutDemo={logout} theme={theme} toggleTheme={toggleTheme} /><main>{routes}</main><CartDrawer open={cartOpen} close={() => setCartOpen(false)} items={cart} inc={inc} dec={dec} remove={remove} confirm={confirm} /></>
